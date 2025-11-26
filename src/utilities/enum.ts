@@ -1,3 +1,8 @@
+export const ENUM_USER_ROLE = {
+  CUSTOMER: 'Customer',
+  SUPPLIER: 'Supplier',
+};
+
 export const ENUM_PAYMENT_STATUS = {
   PENDING: 'Pending',
   SUCCESS: 'Success',
