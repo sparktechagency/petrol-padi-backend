@@ -14,6 +14,7 @@ import CustomerModel from "../Customer/Customer.model";
 import { ICustomer } from "../Customer/Customer.interface";
 import SupplierModel from "../Supplier/Supplier.model";
 import { ISupplier } from "../Supplier/Supplier.interface";
+import { send } from "process";
 
 
 const registerUserService = async (payload: IUser) => {
@@ -237,11 +238,87 @@ const verifyCode = async (payload:{email: string, verifyCode: string}) => {
     return  accessToken;
 };
 
+const sendVerifyCodeService = async (payload:{email: string}) => {
+    const { email } = payload;
+
+    const user = await UserModel.findOne({ email: email });
+
+    if (!user) {
+        throw new ApiError(404, 'User not found to send otp');
+    }
+
+    const {code, expiredAt} = generateVerifyCode(10);
+
+    
+    user.verificationCode = code;
+
+    await user.save();
+
+    await sendVerificationEmail(email,{
+        name: user.name,
+        code: code
+    });
+
+    return null;
+}
+
+// reset password
+const resetPasswordService = async (payload: {
+    email: string;
+    newPassword: string;
+    confirmPassword: string;
+}) => {
+    const { email, newPassword } = payload;
+
+    const user = await UserModel.findOne({ email: payload.email });
+
+    if (!user) {
+        throw new ApiError(404, 'This user does not exist to reset password');
+    }
+
+    if (user.isBlocked) {
+        throw new ApiError(403, 'This user is blocked. Cannot reset password');
+    }
+
+    //hash new password
+    // const newHashedPassword = await bcrypt.hash(
+    //     payload.password,
+    //     Number(config.bcrypt_salt_rounds)
+    // );
+
+    user.password = newPassword;
+    await user.save();
+
+    //generate new token after password reset
+    const tokenPayload = {
+        userId: user?._id as string,
+        profileId: user?.profile as string,
+        role: user?.role,
+        email: user?.email
+    };
+
+    const accessToken: string =  createToken(
+        tokenPayload,
+        config.jwt.secret as Secret,
+        config.jwt.expires_in as SignOptions["expiresIn"]
+    );
+
+    // const refreshToken = createToken(
+    //     jwtPayload,
+    //     config.jwt_refresh_secret as string,
+    //     config.jwt_refresh_expires_in as string
+    // );
+
+    return {user:{name:user.name,email:user.email,role:user.role}, accessToken };
+};
+
 
 
 const AuthServices = { 
     registerUserService,
     loginUserService,
-    verifyCode
+    verifyCode,
+    sendVerifyCodeService,
+    resetPasswordService
 };
 export default AuthServices;

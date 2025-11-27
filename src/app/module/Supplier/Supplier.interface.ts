@@ -15,5 +15,8 @@ export interface ISupplier {
   todayCompletedDelivery :number;
   todayReservedDelivery :number;
   fuelStock :number;
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
   
 }

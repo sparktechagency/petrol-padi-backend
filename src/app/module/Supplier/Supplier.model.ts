@@ -16,6 +16,9 @@ const SupplierSchema = new Schema<ISupplier>({
     todayCompletedDelivery: { type: Number, default: 0 },
     todayReservedDelivery: { type: Number, default: 0 },
     fuelStock: { type: Number, default: 0 },
+    bankName: { type: String, default: "" },
+    accountName: { type: String, default: "" },
+    accountNumber: { type: String, default: "" },
 }, { timestamps: true });
 
 const SupplierModel = models.Supplier || model<ISupplier>("Supplier", SupplierSchema);

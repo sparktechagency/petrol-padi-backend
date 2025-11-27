@@ -22,5 +22,15 @@ authRouter.post("/verify-code",
     AuthController.verifyCode
 );
 
+authRouter.post("/send-verify-code",
+    validateRequest(AuthValidations.sendVerifyCodeValidation)  ,
+    AuthController.sendVerifyCode
+);
+
+authRouter.patch("/reset-password",
+    validateRequest(AuthValidations.resetPasswordValidation)  ,
+    AuthController.resetPassword
+);
+
 
 export default authRouter;

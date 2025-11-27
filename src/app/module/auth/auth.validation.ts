@@ -50,6 +50,29 @@ const verifyCodeValidation = z.object({
     }),
 });
 
+const sendVerifyCodeValidation = z.object({
+    body: z.object({
+        email: z.string().trim().toLowerCase().email('Email must be a valid email')
+    }),
+});
+
+const resetPasswordValidation = z.object({
+    body: z.object({
+        email: z.string().trim().toLowerCase().email('Email must be a valid email'),
+        newPassword: z.string().min(4, 'New password must be at least 4 characters'),
+        confirmPassword: z.string().min(4, 'Confirm password must be at least 4 characters'),
+        
+      })
+      // validate that password === confirmPassword
+      .refine(
+        (data) => data.newPassword === data.confirmPassword,
+        {
+          message: "Password and confirm password must match",
+          path: ["confirmPassword"],
+        }
+      ),
+});
+
 const changePasswordValidationSchema = z.object({
     body: z.object({
         oldPassword: z.string().min(1, 'Old password must be at least 6 characters'),
@@ -69,6 +92,8 @@ const AuthValidations = {
     registerUserValidationSchema,
     loginValidationSchema,
     verifyCodeValidation,
+    sendVerifyCodeValidation,
+    resetPasswordValidation,
     changePasswordValidationSchema,
     completeProfileValidationSchema
  };

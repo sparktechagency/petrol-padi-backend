@@ -38,10 +38,36 @@ const verifyCode = catchAsync(async (req, res) => {
     });
 });
 
+const sendVerifyCode = catchAsync(async (req, res) => {
+    
+    const result = await authServices.verifyCode(req.body);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Verification code sent successfully.",
+        data: result,
+    });
+});
+
+const resetPassword = catchAsync(async (req, res) => {
+    
+    const result = await authServices.resetPasswordService(req.body);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Password reset successfully.",
+        data: result,
+    });
+});
+
 const AuthController = { 
     registerUser ,
     loginUser,
-    verifyCode
+    verifyCode,
+    sendVerifyCode,
+    resetPassword
 
 };
 export default AuthController;

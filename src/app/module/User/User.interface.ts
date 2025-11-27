@@ -13,3 +13,17 @@ export interface IUser {
     isBlockd : boolean;
     isEmailVerified: boolean;
 }
+
+export interface IAddLocation {
+    location: string,
+    role: string,
+    userId: string
+    // latitude?: string,
+    // longitude?: string,
+}
+
+export interface IChangePassword {
+    oldPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}

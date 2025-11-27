@@ -7,4 +7,7 @@ export interface ICustomer {
   phone : string;
   image : string;
   location : string;
+  bankName :string;
+  accountName :string;
+  accountNumber: string;
 }
