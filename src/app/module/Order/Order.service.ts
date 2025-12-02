@@ -58,6 +58,10 @@ const cancelOrderService = async (orderId: string) => {
         status: ENUM_ORDER_STATUS.CANCELED
     },{new: true});
 
+    //adust fuel stock
+
+    //adjust reserve fuel stock
+
     if(order.status !== ENUM_ORDER_STATUS.CANCELED){
         throw new ApiError(500,"failed to cancel a order");
     }else {
@@ -79,6 +83,12 @@ const confirmOrderService = async (orderId: string) => {
     const order = await OrderModel.findByIdAndUpdate(orderId,{
         status: ENUM_ORDER_STATUS.COMPLETED
     },{new: true});
+
+    //adjust fuel stock
+
+    //adjust today delivery
+
+    //adjust reserve fuel stock
 
     if(order.status !== ENUM_ORDER_STATUS.COMPLETED){
         throw new ApiError(500,"failed to confirm a order");
@@ -154,6 +164,12 @@ const acceptOrderService = async (orderId: string) => {
     if (!order.supplier || !order.customer) {
         throw new ApiError(400, "Order has invalid supplier or customer");
     }
+
+    //check fuel is available
+
+    //adjust reserve fuel
+
+    //adjust fuel stock
 
     //update order status
     order.status = ENUM_ORDER_STATUS.ACCEPTED;

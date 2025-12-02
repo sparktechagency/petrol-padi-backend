@@ -15,15 +15,15 @@ const SupplierSchema = new Schema<ISupplier>({
     todayDieselRate: { type: Number, default: 0 },
 
     todayFuelLoad: { type: Number, default: 0 },
-    previousFuelLoadRemain: { type: Number, default: 0 },
+    previousDayFuelLoadRemain: { type: Number, default: 0 },
     todayCompletedFuelDelivery: { type: Number, default: 0 },
-    todayReservedFuelDelivery: { type: Number, default: 0 },
+    todayReservedFuelForDelivery: { type: Number, default: 0 },
     todayFuelStock: { type: Number, default: 0 },
 
     todayDieselLoad: { type: Number, default: 0 },
-    previousDieselLoadRemain: { type: Number, default: 0 },
+    previousDayDieselLoadRemain: { type: Number, default: 0 },
     todayCompletedDieselDelivery: { type: Number, default: 0 },
-    todayReservedDieselDelivery: { type: Number, default: 0 },
+    todayReservedDieselForDelivery: { type: Number, default: 0 },
     todayDieselStock: { type: Number, default: 0 },
 
     bankName: { type: String, default: "" },

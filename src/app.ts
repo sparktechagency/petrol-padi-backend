@@ -4,7 +4,11 @@ import cookieParser from 'cookie-parser';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import notFound from './app/middlewares/notFound';
 import allRouter from './app/routes/allRoutes';
+
+
+
 const app: Application = express();
+
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));

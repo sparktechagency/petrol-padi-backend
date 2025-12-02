@@ -2,12 +2,12 @@ import ApiError from "../error/ApiError";
 import sendEmail from "./sendEmail";
 // import resetPassEmailTemp from "../mailTemplate/resetPassEmailTemp";
 import verifyEmailTemp from "../mailTemplate/verifyEmailTemp";
-import { TEmailTemplate } from "../interface/email.interface";
+// import { TEmailTemplate } from "../interface/email.interface";
 // import supportEmailTemp from "../mailTemplate/supportEmailTemp";
 
 
 
-export const sendVerificationEmail = async (email: string, data: TEmailTemplate) => {
+export const sendVerificationEmail = async (email: string, data: object) => {
   try {
     await sendEmail({
       email,

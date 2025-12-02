@@ -6,8 +6,7 @@ import app from './app';
 import { errorLogger, logger } from './shared/logger';
 import config from './config';
 import mongoDBConnection from './connection/mongoDB';
-// import seedSuperAdmin from './app/DB';
-// import { initializeSocket } from './app/socket/socketManager';
+import runCronJobEverydatAtNight from './helper/cronHelper';
 
 let myServer: HTTPServer | undefined;
 
@@ -17,21 +16,17 @@ const port =
 async function main() {
   try {
     //database connection
-    mongoDBConnection();
+    await mongoDBConnection();
     // logger.info('DB Connected Successfully');
 
-    
-    // myServer = server.listen(port, config.base_url as string, () => {
-    //   logger.info(
-    //     `Example app listening on http://${config.base_url}:${config.port}`,
-    //   );
-    //   seedSuperAdmin();
-    // });
     myServer = app.listen(port, () => {
     //   logger.info(`Server running on http://0.0.0.0:${port}`);
     //   seedSuperAdmin();
         console.log("Server hitting : http://10.10.20.57:8001");
     });
+
+    // call run cron job
+    runCronJobEverydatAtNight();
 
     // Global unhandled rejection handler
     process.on('unhandledRejection', (error) => {

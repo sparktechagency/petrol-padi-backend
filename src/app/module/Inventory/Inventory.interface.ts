@@ -15,3 +15,10 @@ export interface IInventory {
     todayAvailableDiesel: number;
     todayDieselRevenue: number;
 }
+
+export interface ILoadFuel {
+  todayFuelLoad?: string ;
+  todayDieselLoad?: string;
+  fuelType: string;
+  profileId: string;
+}

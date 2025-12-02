@@ -17,6 +17,12 @@ export const ENUM_FUEL_TYPE = {
   DIESEL: 'Diesel'
 }
 
+export const ENUM_PAYMENT_STATUS = {
+  PAID: 'PAID',
+  UNPAID: 'UNPAID',
+  REFUNDED: 'Refunded'
+}
+
 
 export const ENUM_USER_STATUS = {
   IN_PROGRESS: 'in-progress',

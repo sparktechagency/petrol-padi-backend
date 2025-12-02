@@ -14,15 +14,15 @@ export interface ISupplier {
   todayDieselRate : number;
 
   todayFuelLoad :number;
-  previousFuelLoadRemain :number;
-  todayReservedFuelDelivery :number;
+  previousDayFuelLoadRemain :number;
   todayCompletedFuelDelivery :number;
+  todayReservedFuelForDelivery :number;
   todayFuelStock :number;
 
   todayDieselLoad :number;
-  previousDieselLoadRemain :number;
-  todayReservedDieselDelivery :number;
+  previousDayDieselLoadRemain :number;
   todayCompletedDieselDelivery :number;
+  todayReservedDieselForDelivery :number;
   todayDieselStock :number;
 
   bankName: string;
@@ -32,8 +32,8 @@ export interface ISupplier {
 }
 
 export interface addFuelRate {
-  todayFuelRate: string ;
-  todayDieselRate : string;
+  todayFuelRate?: string ;
+  todayDieselRate?: string;
   fuelType: string;
   profileId: string;
 }
