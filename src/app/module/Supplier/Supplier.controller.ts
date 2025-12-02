@@ -1,24 +1,59 @@
-import httpStatus from "http-status";
-import catchAsync from "../../utilities/catchasync";
-import sendResponse from "../../utilities/sendResponse";
+import catchAsync from "../../../utilities/catchasync";
+import sendResponse from "../../../utilities/sendResponse";
 import SupplierServices from "./Supplier.service";
 
-const updateUserProfile = catchAsync(async (req, res) => {
-    const { files } = req;
-    if (files && typeof files === "object" && "profile_image" in files) {
-        req.body.profile_image = files["profile_image"][0].path;
-    }
-    const result = await SupplierServices.updateUserProfile(
-        req.user.profileId,
-        req.body
-    );
+const findLowestHighestFuelRate = catchAsync(async (req, res) => {
+    
+    const result = await SupplierServices.findLowestHighestFuelRateService(req.query);
+
     sendResponse(res, {
-        statusCode: httpStatus.OK,
+        statusCode: 200,
         success: true,
-        message: "Profile updated successfully",
+        message: "Retrieved lowest and highest rate of fuel price today.",
         data: result,
     });
 });
 
-const SupplierController = { updateUserProfile };
+const supplierDetails = catchAsync(async (req, res) => {
+    
+    const result = await SupplierServices.supplierDetailService(req.params.id);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Retrieved a supplier details",
+        data: result,
+    });
+});
+
+const addFuelRate = catchAsync(async (req, res) => {
+    
+    const result = await SupplierServices.addFuelRateService(req.body);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Today's rate updated successfully",
+        data: result,
+    });
+});
+
+const getFuelRate = catchAsync(async (req, res) => {
+    
+    const result = await SupplierServices.getFuelRateService(req.query);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Retrieved fuel rate",
+        data: result,
+    });
+});
+
+const SupplierController = {
+    findLowestHighestFuelRate,
+    supplierDetails,
+    addFuelRate,
+    getFuelRate,
+};
 export default SupplierController;

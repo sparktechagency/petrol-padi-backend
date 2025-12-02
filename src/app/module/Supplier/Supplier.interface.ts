@@ -9,14 +9,31 @@ export interface ISupplier {
   location: string;
   latitude : string;
   longitude :string;
-  todayRate : number;
+
+  todayFuelRate : number;
+  todayDieselRate : number;
+
   todayFuelLoad :number;
-  previousLoadRemain :number;
-  todayCompletedDelivery :number;
-  todayReservedDelivery :number;
-  fuelStock :number;
+  previousFuelLoadRemain :number;
+  todayReservedFuelDelivery :number;
+  todayCompletedFuelDelivery :number;
+  todayFuelStock :number;
+
+  todayDieselLoad :number;
+  previousDieselLoadRemain :number;
+  todayReservedDieselDelivery :number;
+  todayCompletedDieselDelivery :number;
+  todayDieselStock :number;
+
   bankName: string;
   accountName: string;
   accountNumber: string;
   
+}
+
+export interface addFuelRate {
+  todayFuelRate: string ;
+  todayDieselRate : string;
+  fuelType: string;
+  profileId: string;
 }

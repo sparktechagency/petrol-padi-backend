@@ -7,8 +7,16 @@ export const ENUM_ORDER_STATUS = {
   PENDING: 'Pending',
   ACCEPTED: 'Accepted',
   ON_THE_WAY: 'On_The_Way',
-  COMPLETED: 'Completed'
+  COMPLETED: 'Completed',
+  CANCELED: 'Canceled',
+  REJECTED: 'Rejected'
 };
+
+export const ENUM_FUEL_TYPE = {
+  FUEL: 'Fuel',
+  DIESEL: 'Diesel'
+}
+
 
 export const ENUM_USER_STATUS = {
   IN_PROGRESS: 'in-progress',

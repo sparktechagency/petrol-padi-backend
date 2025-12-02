@@ -10,12 +10,22 @@ const SupplierSchema = new Schema<ISupplier>({
     location: { type: String ,  default: "" },
     latitude: { type: String,  default: "" },
     longitude: { type: String , default: "" },
-    todayRate: { type: Number, default: 0 },
+
+    todayFuelRate: { type: Number, default: 0 },
+    todayDieselRate: { type: Number, default: 0 },
+
     todayFuelLoad: { type: Number, default: 0 },
-    previousLoadRemain: { type: Number, default: 0 },
-    todayCompletedDelivery: { type: Number, default: 0 },
-    todayReservedDelivery: { type: Number, default: 0 },
-    fuelStock: { type: Number, default: 0 },
+    previousFuelLoadRemain: { type: Number, default: 0 },
+    todayCompletedFuelDelivery: { type: Number, default: 0 },
+    todayReservedFuelDelivery: { type: Number, default: 0 },
+    todayFuelStock: { type: Number, default: 0 },
+
+    todayDieselLoad: { type: Number, default: 0 },
+    previousDieselLoadRemain: { type: Number, default: 0 },
+    todayCompletedDieselDelivery: { type: Number, default: 0 },
+    todayReservedDieselDelivery: { type: Number, default: 0 },
+    todayDieselStock: { type: Number, default: 0 },
+
     bankName: { type: String, default: "" },
     accountName: { type: String, default: "" },
     accountNumber: { type: String, default: "" },

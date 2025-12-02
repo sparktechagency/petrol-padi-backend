@@ -4,10 +4,11 @@ export interface IOrder {
     customer: Types.ObjectId ;
     supplier: Types.ObjectId ;
     status : string;
+    fuelType: string;
     priceRate: number;
     quantity: number;
     totalPrice: number;
-    address: string;
+    location: string;
     latitude: string;
     longitude: string;
 }
