@@ -1,7 +1,7 @@
 import { model, Schema,models } from "mongoose";
 import { IOrder } from "./Order.interface";
 import { ENUM_FUEL_TYPE, ENUM_ORDER_STATUS } from "../../../utilities/enum";
-import { string } from "zod";
+
 
 const OrderSchema = new Schema<IOrder>({
     customer: { type: Schema.Types.ObjectId, required: true, ref: "Customer" },

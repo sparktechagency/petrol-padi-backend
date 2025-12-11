@@ -1,24 +1,49 @@
-import httpStatus from "http-status";
-import catchAsync from "../../utilities/catchasync";
-import sendResponse from "../../utilities/sendResponse";
+import catchAsync from "../../../utilities/catchasync";
+import sendResponse from "../../../utilities/sendResponse";
 import CustomerServices from "./Customer.service";
 
-const updateUserProfile = catchAsync(async (req, res) => {
-    const { files } = req;
-    if (files && typeof files === "object" && "profile_image" in files) {
-        req.body.profile_image = files["profile_image"][0].path;
-    }
-    const result = await CustomerServices.updateUserProfile(
-        req.user.profileId,
-        req.body
-    );
+
+// dashboard
+
+const dashboardAllCustomer = catchAsync(async (req, res) => {
+    
+    const result = await CustomerServices.getAllCustomerService();
+
     sendResponse(res, {
-        statusCode: httpStatus.OK,
+        statusCode: 200,
         success: true,
-        message: "Profile updated successfully",
+        message: "Retrieved all Customer",
         data: result,
     });
 });
 
-const CustomerController = { updateUserProfile };
+const dashboardSingleCustomer = catchAsync(async (req, res) => {
+    
+    const result = await CustomerServices.getSingleCustomerService(req.params.customerId);
+    
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Retrieved a Customer details",
+        data: result,
+    });
+});
+
+const blockUser = catchAsync(async (req, res) => {
+    
+    const result = await CustomerServices.blockUserService(req.query);
+    
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Retrieved a Customer details",
+        data: result,
+    });
+});
+
+const CustomerController = { 
+    dashboardAllCustomer,
+    dashboardSingleCustomer,
+    blockUser
+ };
 export default CustomerController;

@@ -29,9 +29,45 @@ const adminLogin = catchAsync(
     }
 );
 
+const adminVerifyCode = catchAsync(async (req, res) => {
+    
+    const result = await DashboardService.adminVerifyCode(req.body);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Code verified successfully.",
+        data: result,
+    });
+});
+
+const adminSendVerifyCode = catchAsync(async (req, res) => {
+    
+    const result = await DashboardService.adminSendVerifyCodeService(req.body);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Verification code sent successfully.",
+        data: result,
+    });
+});
+
+const adminResetPassword = catchAsync(async (req, res) => {
+    
+    const result = await DashboardService.adminResetPasswordService(req.body);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Password reset successfully.",
+        data: result,
+    });
+});
+
 const editAdminProfile = catchAsync(
     async (req,res) => {
-        const result = await DashboardService.loginAdminService(req.body);
+        const result = await DashboardService.editProfileService(req.user,req.body);
 
         sendResponse(res,{
             statusCode: 200,
@@ -44,7 +80,7 @@ const editAdminProfile = catchAsync(
 
 const changeAdminPassword = catchAsync(
     async (req,res) => {
-        const result = await DashboardService.loginAdminService(req.body);
+        const result = await DashboardService.changeAdminPasswordService(req.user,req.body);
 
         sendResponse(res,{
             statusCode: 200,
@@ -57,7 +93,7 @@ const changeAdminPassword = catchAsync(
 
 const deleteAdminAccount = catchAsync(
     async (req,res) => {
-        const result = await DashboardService.loginAdminService(req.body);
+        const result = await DashboardService.deleteAdminService(req.user);
 
         sendResponse(res,{
             statusCode: 200,
@@ -83,13 +119,13 @@ const dashboardStat = catchAsync(
 
 const blockAdmin = catchAsync(
     async (req,res) => {
-        const result = await DashboardService.loginAdminService(req.body);
+        const result = await DashboardService.blockAdminService(req.query);
 
         sendResponse(res,{
             statusCode: 200,
             success: true,
-            message: "Got website stat",
-            data: result
+            message: result.msg,
+            data: result.admin
         });
     }
 );
@@ -98,6 +134,9 @@ const blockAdmin = catchAsync(
 const DashboardController = {
     adminRegister,
     adminLogin,
+    adminVerifyCode,
+    adminSendVerifyCode,
+    adminResetPassword,
     editAdminProfile,
     changeAdminPassword,
     deleteAdminAccount,

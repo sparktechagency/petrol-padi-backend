@@ -20,6 +20,14 @@ const adminSchema = new Schema<IAdmin>({
         type: String,
         default: "Admin"
     },
+    verificationCode: {
+        type: String,
+        default: ''
+    },
+    isEmailVerified:{
+        type: Boolean,
+        default: false
+    },
     isBlocked:{
         type: Boolean,
         default: false

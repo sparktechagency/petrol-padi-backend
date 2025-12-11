@@ -270,7 +270,7 @@ const resetPasswordService = async (payload: {
 }) => {
     const { email, newPassword } = payload;
 
-    const user = await UserModel.findOne({ email: payload.email });
+    const user = await UserModel.findOne({ email: email });
 
     if (!user) {
         throw new ApiError(404, 'This user does not exist to reset password');

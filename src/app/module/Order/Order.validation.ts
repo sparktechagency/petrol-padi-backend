@@ -38,9 +38,20 @@ const getsupplierOrderValidation = z.object({
     })
 });
 
+const getDashboardOrderValidation = z.object({
+  query: z.object({
+    orderStatus: z
+      .enum(Object.values(ENUM_ORDER_STATUS) as [string, ...string[]])
+      .optional(),
+  }),
+});
+
+
+
 const OrderValidations = { 
     createOrderValidation,
     getAllOrderValidation ,
-    getsupplierOrderValidation
+    getsupplierOrderValidation,
+    getDashboardOrderValidation
 };
 export default OrderValidations;

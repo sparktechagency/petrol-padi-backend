@@ -10,6 +10,7 @@ const SupplierSchema = new Schema<ISupplier>({
     location: { type: String ,  default: "" },
     latitude: { type: String,  default: "" },
     longitude: { type: String , default: "" },
+    document: { type: String , default: "" },
 
     todayFuelRate: { type: Number, default: 0 },
     todayDieselRate: { type: Number, default: 0 },
@@ -29,6 +30,8 @@ const SupplierSchema = new Schema<ISupplier>({
     bankName: { type: String, default: "" },
     accountName: { type: String, default: "" },
     accountNumber: { type: String, default: "" },
+
+    isApproved: {type: Boolean, default: false}
 }, { timestamps: true });
 
 const SupplierModel = models.Supplier || model<ISupplier>("Supplier", SupplierSchema);

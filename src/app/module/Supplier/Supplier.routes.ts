@@ -28,5 +28,44 @@ supplierRouter.get("/get-fuel-rate",
   SupplierController.getFuelRate  
 );
 
+supplierRouter.post("/add-document",
+    
+    validateRequest(SupplierValidations.getRateValidation),
+  SupplierController.getFuelRate  
+);
+
+//dashboard
+
+supplierRouter.get("/get-supplier-request",
+    
+    // validateRequest(SupplierValidations.getRateValidation),
+  SupplierController.getAllSupplierRequest  
+);
+
+supplierRouter.get("/get-all-supplier",
+    
+    // validateRequest(SupplierValidations.getRateValidation),
+  SupplierController.getAllSupplier  
+);
+
+supplierRouter.get("/get-supplier-detail/:supplierId",
+    
+    // validateRequest(SupplierValidations.getRateValidation),
+  SupplierController.getSupplierDetails  
+);
+
+supplierRouter.patch("/approve-supplier/:supplierId",
+    
+    // validateRequest(SupplierValidations.getRateValidation),
+  SupplierController.getSupplierDetails  
+);
+
+supplierRouter.delete("/delete-supplier/:supplierId",
+    
+    // validateRequest(SupplierValidations.getRateValidation),
+  SupplierController.getSupplierDetails  
+);
+
+
 
 export default supplierRouter;

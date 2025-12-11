@@ -135,6 +135,32 @@ const deleteOrder = catchAsync(async (req, res) => {
     });
 });
 
+//dashboard
+
+const dashboardAllOrder = catchAsync(async (req, res) => {
+
+    const result = await OrderServices.dashboardAllOrderService(req.query);
+   
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Rerrieved all order.",
+        data: result,
+    });
+});
+
+const dashboardSingleOrder = catchAsync(async (req, res) => {
+
+    const result = await OrderServices.dashboardSingleOrderService(req.params.orderId);
+   
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Retrieved a order successfully.",
+        data: result,
+    });
+});
+
 const OrderController = { 
     createNewOrder,
     getAllOrder,
@@ -146,6 +172,8 @@ const OrderController = {
     supplierSingleOrder,
     acceptOrder,
     orderOnTheWay,
-    deleteOrder
+    deleteOrder,
+    dashboardAllOrder,
+    dashboardSingleOrder
 };
 export default OrderController;

@@ -6,6 +6,7 @@ const CustomerSchema = new Schema<ICustomer>({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     phone: { type: String, default: "" },
+    image: { type: String, default: "" },
     location: { type: String, default: "" },
     bankName: { type: String, default: "" },
     accountName: { type: String, default: "" },

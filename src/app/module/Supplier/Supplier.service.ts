@@ -1,5 +1,6 @@
 import ApiError from "../../../error/ApiError";
 import { ENUM_FUEL_TYPE } from "../../../utilities/enum";
+import UserModel from "../User/User.model";
 import { addFuelRate, ISupplier } from "./Supplier.interface";
 import SupplierModel from "./Supplier.model";
 
@@ -152,10 +153,73 @@ const getFuelRateService = async (query: Record<string,unknown>) => {
 
 }
 
+//dashboard
+
+const getSupplierRequestService = async () => {
+
+    const allRequest = await SupplierModel.find({isApproved: false}).select("user name email phone image location document createdAt").lean();
+
+    return allRequest;
+}
+
+const getAllSupplierService = async () => {
+
+    const allRequest = await SupplierModel.find({isApproved: true}).select("user name email phone image location createdAt").lean();
+
+    return allRequest;
+}
+
+const getSupplierDetailsService = async (id: string) => {
+
+    const supplier = await SupplierModel.findById(id).select("name email phone image location bankName accountName accountNumber").lean();
+
+    if(!supplier){
+        throw new ApiError(404,"No supplier detail found.");
+    }
+
+    return supplier;
+}
+
+const approveSupplierService = async (id: string) =>{
+
+    const approvedSupplier = await SupplierModel.findByIdAndUpdate(id,{isApproved: true},{new:true});
+
+    if(!approvedSupplier.isApproved){
+        throw new ApiError(500,"Failed to approve this supplier");
+    }
+
+    return null;
+}
+
+const deleteSupplierService = async (id: string) =>{
+
+    const supplier: any = await SupplierModel.findById(id).lean();
+
+    if(!supplier){
+        throw new ApiError(404, "Supplier not found to delete.");
+    }
+
+    //delete both supplier and user
+    const [deletedUser,deletedSupplier] = await Promise.all([
+        UserModel.findByIdAndDelete(supplier?.user),
+        SupplierModel.findByIdAndDelete(id)
+    ]);
+
+    if(!deletedSupplier || !deletedUser){
+        throw new ApiError(500,"Failed to delete supplier.");
+    }
+}
+
+
 const SupplierServices = { 
     findLowestHighestFuelRateService,
     supplierDetailService,
     addFuelRateService,
-    getFuelRateService
+    getFuelRateService,
+    getAllSupplierService,
+    getSupplierRequestService,
+    getSupplierDetailsService,
+    approveSupplierService,
+    deleteSupplierService
  };
 export default SupplierServices;

@@ -234,6 +234,31 @@ const deleteOrderService = async (orderId: string) => {
 
 }
 
+//dashboard
+
+const dashboardAllOrderService = async (query: Record<string,unknown>) => {
+    const {orderStatus} = query;
+
+    const orders = await OrderModel.find({orderStatus: orderStatus}).lean();
+
+    return orders;
+}
+
+const dashboardSingleOrderService = async (id: string) => {
+    // const {orderStatus} = query;
+
+    const order = await OrderModel.findById(id)
+                    .populate({path:"customer",select:"name email image phone"})
+                        .populate({path:"supplier",select:"name email"})
+                            .lean();
+    
+    if(!order){
+        throw new ApiError(404," No order found.");
+    }
+
+    return order;
+}
+
 
 
 const OrderServices = { 
@@ -247,6 +272,8 @@ const OrderServices = {
     supplierSingleOrderService,
     acceptOrderService,
     orderOnTheWayService,
-    deleteOrderService
+    deleteOrderService,
+    dashboardAllOrderService,
+    dashboardSingleOrderService
  };
 export default OrderServices;

@@ -9,6 +9,7 @@ export interface ISupplier {
   location: string;
   latitude : string;
   longitude :string;
+  document: string
 
   todayFuelRate : number;
   todayDieselRate : number;
@@ -28,6 +29,8 @@ export interface ISupplier {
   bankName: string;
   accountName: string;
   accountNumber: string;
+
+  isApproved: boolean;
   
 }
 

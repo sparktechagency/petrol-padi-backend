@@ -67,4 +67,19 @@ orderRouter.post("/order-on-the-way/:orderId",
         OrderController.confirmOrder
 );
 
+//dashboard
+
+orderRouter.get("/dashboard-all-order",
+        //authorization,
+        validateRequest(OrderValidations.getDashboardOrderValidation),
+        OrderController.dashboardAllOrder
+);
+
+orderRouter.get("/dashboard-single-order/:orderId",
+        //authorization,
+        // validateRequest(OrderValidations.getAllOrderValidation),
+        OrderController.dashboardSingleOrder
+);
+
+
 export default orderRouter;

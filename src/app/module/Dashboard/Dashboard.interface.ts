@@ -5,5 +5,7 @@ export interface IAdmin {
     phone: string;
     password: string;
     role: string;
+    verificationCode: string;
+    isEmailVerified: boolean;
     isBlocked: boolean;
 }

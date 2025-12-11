@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const registerUserValidationSchema = z.object({
+const registerUserValidationSchema = z.object({
   body: z.object({
 
     name: z
