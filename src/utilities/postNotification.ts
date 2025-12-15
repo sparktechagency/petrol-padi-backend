@@ -1,6 +1,6 @@
 import {NotificationModel,AdminNotificationModel} from "../app/module/Notification/Notification.model";;
 import catchAsync from "./catchasync";
-import ApiError from "../error/ApiError.js";
+import ApiError from "../error/ApiError";
 import { INotification, INotificationPayload } from "../app/module/Notification/Notification.interface";
 
 

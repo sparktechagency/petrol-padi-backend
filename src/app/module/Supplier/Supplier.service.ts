@@ -4,6 +4,7 @@ import { ENUM_FUEL_TYPE } from "../../../utilities/enum";
 import UserModel from "../User/User.model";
 import { addFuelRate, ISupplier } from "./Supplier.interface";
 import SupplierModel from "./Supplier.model";
+import deleteOldFile from "../../../utilities/deleteFile";
 
 const findLowestHighestFuelRateService = async (locationQuery: Record<string,unknown>) => {
 
@@ -96,13 +97,15 @@ const findLowestHighestFuelRateService = async (locationQuery: Record<string,unk
     
 };
 
-const supplierDetailService = async (supplierId: string) => {
+const supplierDetailService = async (userDetails: JwtPayload) => {
+
+    const {profileId: supplierId} = userDetails;
 
     if(!supplierId){
         throw new ApiError(400,"Supplier is is required to get supplier details");
     }
 
-    const supplier = await SupplierModel.findById(supplierId).select("name email phone location todayFuelRate todayDieselRate todayFuelStock todayDieselStock").lean();
+    const supplier = await SupplierModel.findById(supplierId).lean();
 
     let result = {};
 
@@ -118,11 +121,12 @@ const supplierDetailService = async (supplierId: string) => {
     //get all review from review collection and then calculate avg and total rating
     //or everytime new rating is added determine avg and total and keep it with supplier
 
-
+    return supplier;
 }
 
-const addFuelRateService = async (payload: addFuelRate) => {
-    const {todayFuelRate, todayDieselRate, fuelType, profileId} = payload;
+const addFuelRateService = async (userDetails: JwtPayload,payload: addFuelRate) => {
+    const {profileId} = userDetails;
+    const {todayFuelRate, todayDieselRate, fuelType} = payload;
 
     let supplier;
 
@@ -141,12 +145,12 @@ const addFuelRateService = async (payload: addFuelRate) => {
         throw new ApiError(500,"Failed to add fuel rate");
     }
 
-    return null;
+    return {todayFuelRate: supplier.todayFuelRate, todayDieselRate: supplier.todayDieselRate};
     
 }
 
-const getFuelRateService = async (query: Record<string,unknown>) => {
-    const {profileId} = query;
+const getFuelRateService = async (userDetails: JwtPayload) => {
+    const {profileId} = userDetails;
 
     const supplier = await SupplierModel.findById(profileId).select("name email todayFuelRate todayDieselRate");
 
@@ -161,7 +165,7 @@ const uploadDocumentService = async (userDetails: JwtPayload, file: Express.Mult
 
     // Handle image update
   if (file) {
-    // if (profile.image) deleteOldFile(profile.image as string);
+    if (supplier.document) deleteOldFile(supplier.image as string);
     supplier.document = `uploads/supplier-file/${file.filename}`;
   }
 

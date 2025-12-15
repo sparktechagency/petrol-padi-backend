@@ -11,7 +11,7 @@ const loadFuelValidation = z.object({
         message: "Fuel type must be either 'Fuel' or 'Diesel'"
       }),
 
-    profileId : z.string().min(1,"Profile id is required"),
+    // profileId : z.string().min(1,"Profile id is required"),
   }).refine(
     (data) => data.todayFuelLoad !== undefined || data.todayDieselLoad !== undefined,
     { message: "At least one of todayFuelRate or todayDieselRate is required" }
@@ -27,7 +27,7 @@ const getFuelValidation = z.object({
 
  const InventoryQueryValidation = z.object({
   query: z.object({
-    supplierId: z.string().min(1, "Supplier ID is required"),
+    // supplierId: z.string().min(1, "Supplier ID is required"),
 
     fuelType:  z.string().nonempty("Fuel type is required")
       .refine(val => val === "Fuel" || val === "Diesel", {

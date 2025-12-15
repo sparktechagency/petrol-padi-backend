@@ -11,7 +11,7 @@ const addRateValidation = z.object({
         message: "Fuel type must be either 'Fuel' or 'Diesel'"
       }),
 
-    profileId : z.string().min(1,"Profile id is required"),
+    // profileId : z.string().min(1,"Profile id is required"),
   }).refine(
     (data) => data.todayFuelRate !== undefined || data.todayDieselRate !== undefined,
     { message: "At least one of todayFuelRate or todayDieselRate is required" }

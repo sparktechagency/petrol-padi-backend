@@ -1,5 +1,5 @@
 import express from "express";
-import {auth} from "../../middlewares/auth";
+import {auth, authorizeUser} from "../../middlewares/auth";
 import validateRequest from "../../middlewares/validateRequest";
 import OrderValidations from "./Order.validation";
 import OrderController from "./Order.controller";
@@ -7,6 +7,7 @@ import OrderController from "./Order.controller";
 
 const orderRouter = express.Router();
 
+//customer
 orderRouter.post("/create-new-order",
         //authorization,
         validateRequest(OrderValidations.createOrderValidation),
@@ -43,28 +44,35 @@ orderRouter.post("/reject-order/:orderId",
         OrderController.rejectOrder
 );
 
+//supplier
 orderRouter.get("/supplier-all-order",
-        //authorization,
+        authorizeUser,
         validateRequest(OrderValidations.getsupplierOrderValidation),
-        OrderController.rejectOrder
+        OrderController.supplierAllOrder
 );
 
 orderRouter.get("/supplier-single-order/:orderId",
         //authorization,
         // validateRequest(OrderValidations.getAllOrderValidation),
-        OrderController.rejectOrder
+        OrderController.supplierSingleOrder
 );
 
 orderRouter.post("/accept-order/:orderId",
         //authorization,
         // validateRequest(OrderValidations.getAllOrderValidation),
-        OrderController.confirmOrder
+        OrderController.acceptOrder
 );
 
 orderRouter.post("/order-on-the-way/:orderId",
         //authorization,
         // validateRequest(OrderValidations.getAllOrderValidation),
-        OrderController.confirmOrder
+        OrderController.orderOnTheWay
+);
+
+orderRouter.delete("/delete-order/:orderId",
+        //authorization,
+        // validateRequest(OrderValidations.getAllOrderValidation),
+        OrderController.deleteOrder
 );
 
 //dashboard

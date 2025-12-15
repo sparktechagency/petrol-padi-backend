@@ -1,3 +1,4 @@
+import { AuthRequest } from "../../../interface/authRequest";
 import catchAsync from "../../../utilities/catchasync";
 import sendResponse from "../../../utilities/sendResponse";
 import { IInventoryQuery } from "./Inventory.interface";
@@ -5,7 +6,9 @@ import InventoryServices from "./Inventory.service";
 
 const todayLoadFuel = catchAsync(async (req, res) => {
 
-    const result = await InventoryServices.loadFuelService(req.body);
+     const { user } = req as AuthRequest;
+
+    const result = await InventoryServices.loadFuelService(user,req.body);
     
     sendResponse(res, {
         statusCode: 200,
@@ -17,7 +20,9 @@ const todayLoadFuel = catchAsync(async (req, res) => {
 
 const getLoadedFuel = catchAsync(async (req, res) => {
 
-    const result = await InventoryServices.getLoadedFuelService(req.query);
+     const { user } = req as AuthRequest;
+
+    const result = await InventoryServices.getLoadedFuelService(user);
     
     sendResponse(res, {
         statusCode: 200,
@@ -29,7 +34,9 @@ const getLoadedFuel = catchAsync(async (req, res) => {
 
 const filterInventory = catchAsync(async (req, res) => {
 
-    const result = await InventoryServices.filterInventoryService(req.query);
+     const { user } = req as AuthRequest;
+
+    const result = await InventoryServices.filterInventoryService(user,req.query);
     
     sendResponse(res, {
         statusCode: 200,

@@ -1,10 +1,15 @@
+import { AuthRequest } from "../../../interface/authRequest";
 import catchAsync from "../../../utilities/catchasync";
 import sendResponse from "../../../utilities/sendResponse";
 import OrderServices from "./Order.service";
 
+
+//customer
 const createNewOrder = catchAsync(async (req, res) => {
 
-    const result = await OrderServices.createOrderService(req.user,req.body);
+   const { user } = req as AuthRequest;
+
+    const result = await OrderServices.createOrderService(user,req.body);
    
     sendResponse(res, {
         statusCode: 200,
@@ -74,9 +79,13 @@ const rejectOrder = catchAsync(async (req, res) => {
     });
 });
 
+//dashboard
+
 const supplierAllOrder = catchAsync(async (req, res) => {
 
-    const result = await OrderServices.supplierAllOrderService(req.query);
+     const { user } = req as AuthRequest;
+
+    const result = await OrderServices.supplierAllOrderService(user,req.query);
    
     sendResponse(res, {
         statusCode: 200,

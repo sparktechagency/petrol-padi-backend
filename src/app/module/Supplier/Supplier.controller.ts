@@ -1,3 +1,4 @@
+import { AuthRequest } from "../../../interface/authRequest";
 import catchAsync from "../../../utilities/catchasync";
 import sendResponse from "../../../utilities/sendResponse";
 import SupplierServices from "./Supplier.service";
@@ -15,8 +16,10 @@ const findLowestHighestFuelRate = catchAsync(async (req, res) => {
 });
 
 const supplierDetails = catchAsync(async (req, res) => {
+
+     const { user } = req as AuthRequest;
     
-    const result = await SupplierServices.supplierDetailService(req.params.id);
+    const result = await SupplierServices.supplierDetailService(user);
 
     sendResponse(res, {
         statusCode: 200,
@@ -27,8 +30,10 @@ const supplierDetails = catchAsync(async (req, res) => {
 });
 
 const addFuelRate = catchAsync(async (req, res) => {
+
+     const { user } = req as AuthRequest;
     
-    const result = await SupplierServices.addFuelRateService(req.body);
+    const result = await SupplierServices.addFuelRateService(user,req.body);
 
     sendResponse(res, {
         statusCode: 200,
@@ -40,7 +45,9 @@ const addFuelRate = catchAsync(async (req, res) => {
 
 const getFuelRate = catchAsync(async (req, res) => {
     
-    const result = await SupplierServices.getFuelRateService(req.query);
+     const { user } = req as AuthRequest;
+     
+    const result = await SupplierServices.getFuelRateService(user);
 
     sendResponse(res, {
         statusCode: 200,
@@ -51,14 +58,16 @@ const getFuelRate = catchAsync(async (req, res) => {
 });
 
 const uploadDocument = catchAsync(async (req, res) => {
-    
-    // const result = await SupplierServices.uploadDocumentService(req.user,req.file);
+
+     const { user } = req as AuthRequest;
+
+    const result = await SupplierServices.uploadDocumentService(user,req.file);
 
     sendResponse(res, {
         statusCode: 200,
         success: true,
         message: "Document added successfully.",
-        data: null,
+        data: result,
     });
 });
 

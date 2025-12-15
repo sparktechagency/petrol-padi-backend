@@ -5,6 +5,8 @@ import dashboardRouter from "../module/Dashboard/Dashboard.routes";
 import userRouter from "../module/User/User.routes";
 import supplierRouter from "../module/Supplier/Supplier.routes";
 import settingsRouter from "../module/Settings/Settings.routes";
+import orderRouter from "../module/Order/Order.routes";
+import inventoryRouter from "../module/Inventory/Inventory.routes";
 
 const allRouter = Router();
 
@@ -33,6 +35,14 @@ const moduleRoutes = [
     {
         path: '/settings',
         router: settingsRouter,
+    },
+    {
+        path: '/order',
+        router: orderRouter,
+    },
+    {
+        path: '/inventory',
+        router: inventoryRouter,
     },
     
 ];

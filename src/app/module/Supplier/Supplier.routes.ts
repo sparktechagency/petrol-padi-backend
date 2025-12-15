@@ -1,5 +1,5 @@
 import express from "express";
-import {auth} from "../../middlewares/auth";
+import {auth, authorizeUser} from "../../middlewares/auth";
 import validateRequest from "../../middlewares/validateRequest";
 import SupplierValidations from "./Supplier.validation";
 import SupplierController from "./Supplier.controller";
@@ -14,23 +14,24 @@ supplierRouter.get("/find-lowest-highest-rate",
 );
 
 supplierRouter.get("/supplier-details",
-  SupplierController.findLowestHighestFuelRate  
+  authorizeUser,
+  SupplierController.supplierDetails 
 );
 
 supplierRouter.post("/add-fuel-rate",
-
+    authorizeUser,
     validateRequest(SupplierValidations.addRateValidation),
   SupplierController.addFuelRate 
 );
 
 supplierRouter.get("/get-fuel-rate",
-    
-    validateRequest(SupplierValidations.getRateValidation),
+    authorizeUser,
+    // validateRequest(SupplierValidations.getRateValidation),
   SupplierController.getFuelRate  
 );
 
 supplierRouter.post("/upload-document",
-    //auth(["Supplier"]),
+  authorizeUser,
   uploadDocument.single("supplier-file"),
   SupplierController.uploadDocument
 );

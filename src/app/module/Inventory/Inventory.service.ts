@@ -4,10 +4,14 @@ import { IInventory, ILoadFuel,IInventoryQuery } from "./Inventory.interface";
 import InventoryModel from "./Inventory.model";
 import { ENUM_FUEL_TYPE } from "../../../utilities/enum";
 import SupplierModel from "../Supplier/Supplier.model";
+import { JwtPayload } from "jsonwebtoken";
+import { ISupplier } from "../Supplier/Supplier.interface";
 
 
-const loadFuelService = async (payload: ILoadFuel) => {
-    const {todayFuelLoad, todayDieselLoad, fuelType, profileId} = payload;
+const loadFuelService = async (userDetails: JwtPayload,payload: ILoadFuel) => {
+    const {profileId} = userDetails;
+
+    const {todayFuelLoad, todayDieselLoad, fuelType} = payload;
 
     let supplier;
 
@@ -26,16 +30,22 @@ const loadFuelService = async (payload: ILoadFuel) => {
         throw new ApiError(500,"Failed to load fuel");
     }
 
-    return null;
+    return {
+      name: supplier.name, 
+      todayFuelLoad: supplier.todayFuelLoad,
+      todayDieselLoad: supplier.todayDieselLoad,
+    };
     
 }
 
-const getLoadedFuelService = async (query: Record<string,unknown>) => {
-    const profileId = query.profileId as string;
+const getLoadedFuelService = async (userDetails: JwtPayload) => {
+    const { profileId } = userDetails; 
+
+    //const {fuelType} = payload;
 
     const mongooseProfileId = new mongoose.Types.ObjectId(profileId);
 
-    const supplier = await SupplierModel.aggregate([
+    const supplier: ISupplier | any = await SupplierModel.aggregate([
         {
             $match: {_id: mongooseProfileId}
         },
@@ -59,17 +69,30 @@ const getLoadedFuelService = async (query: Record<string,unknown>) => {
         }
     ]);
 
+    // if(fuelType === ENUM_FUEL_TYPE.FUEL){
+    //   return {
+    //       _id: supplier._id,
+    //       name: supplier.name,
+    //       email: supplier.email,
+    //       todayFuelLoad: supplier.todayFuelLoad,
+    //       previousDayFuelLoadRemain: supplier.previousDayFuelLoadRemaining,
+    //       todayCompletedFuelDelivery: supplier.todayCompletedFuelDelivery,
+    //       todayReservedFuelForDelivery: supplier.todayReservedFuelForDelivery,
+    //       todayFuelStock: supplier.todayFuelStock,
+    //   }
+    // }
+
     return supplier;
 
 }
 
 
 
-export const filterInventoryService = async (query: Record<string,unknown>) => {
+const filterInventoryService = async (userDetails: JwtPayload,query: Record<string,unknown>) => {
+  const {profileId} = userDetails
+  const { fuelType, time} = query;
 
-  const {supplierId, fuelType, time} = query;
-
-  const supplier = new mongoose.Types.ObjectId(supplierId as string);
+  const supplier = new mongoose.Types.ObjectId(profileId);
 
   // -------------------------------
   // 1️⃣ TIME RANGE CALCULATION
@@ -78,17 +101,26 @@ export const filterInventoryService = async (query: Record<string,unknown>) => {
   const now = new Date();
   let startDate: Date;
 
-  if (time === "this-week") {
-    const day = now.getDay();          // 0 = Sunday
-    const diff = now.getDate() - day;  
-    startDate = new Date(now.getFullYear(), now.getMonth(), diff);
-  } 
-  else if (time === "this-month") {
-    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-  } 
-  else {
-    startDate = new Date(now.getFullYear(), 0, 1);
-  }
+  switch (time) {
+
+    case "this-week":
+      const day = now.getDay();          // 0 = Sunday
+      const diff = now.getDate() - day;  
+      startDate = new Date(now.getFullYear(), now.getMonth(), diff);
+      break;
+    
+    case "this-month":
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    
+    case "this-year":
+      startDate = new Date(now.getFullYear(), 0, 1);
+      break;
+
+    default:
+      throw new ApiError(400,"Invaid time.");
+
+    }
 
   const matchStage = {
     supplier: supplier,
@@ -139,11 +171,9 @@ export const filterInventoryService = async (query: Record<string,unknown>) => {
     return {
       time,
       type: fuelType,
-      supplierId,
       data: dailyStats
     };
   }
-
   // CASE 2: YEAR → month-wise aggregated totals
   else if (time === "this-year") {
     const yearlyStats = await InventoryModel.aggregate([
@@ -182,13 +212,12 @@ export const filterInventoryService = async (query: Record<string,unknown>) => {
     return {
       time,
       type: fuelType,
-      supplierId,
       data: yearlyStats,
     };
   }
 
 
-  return null;
+  // return null;
 };
 
 

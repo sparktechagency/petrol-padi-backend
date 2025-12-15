@@ -27,9 +27,6 @@ const getAllOrderValidation = z.object({
 
 const getsupplierOrderValidation = z.object({
     query: z.object({
-        // customer: z.string().min(1,"Customer id is required"),
-        supplierId: z.string().min(1,"Supplier is required"),
-        // orderStatus: z.string().min(1,"Customer is required"), 
         orderStatus: z.enum(Object.values(ENUM_ORDER_STATUS))
         //     .refine((val) => val.includes(Object.values(ENUM_ORDER_STATUS)), {
         //     message: "Fuel type must be either 'fuel' or 'diesel'"
