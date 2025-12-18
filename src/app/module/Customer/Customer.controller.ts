@@ -1,9 +1,25 @@
+import { AuthRequest } from "../../../interface/authRequest";
 import catchAsync from "../../../utilities/catchasync";
 import sendResponse from "../../../utilities/sendResponse";
 import CustomerServices from "./Customer.service";
 
 
+const getprofileDetail = catchAsync(async (req, res) => {
+
+     const { user } = req as AuthRequest;
+    
+    const result = await CustomerServices.getProfileDetailService(user);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Got profile detail.",
+        data: result,
+    });
+});
+
 // dashboard
+
 
 const dashboardAllCustomer = catchAsync(async (req, res) => {
     
@@ -42,6 +58,7 @@ const blockUser = catchAsync(async (req, res) => {
 });
 
 const CustomerController = { 
+    getprofileDetail,
     dashboardAllCustomer,
     dashboardSingleCustomer,
     blockUser

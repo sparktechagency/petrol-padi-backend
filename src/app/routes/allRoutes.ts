@@ -7,6 +7,9 @@ import supplierRouter from "../module/Supplier/Supplier.routes";
 import settingsRouter from "../module/Settings/Settings.routes";
 import orderRouter from "../module/Order/Order.routes";
 import inventoryRouter from "../module/Inventory/Inventory.routes";
+import customerRouter from "../module/Customer/Customer.routes";
+import reviewRouter from "../module/Review/Review.routes";
+import notificationRouter from "../module/Notification/Notification.routes";
 
 const allRouter = Router();
 
@@ -43,6 +46,18 @@ const moduleRoutes = [
     {
         path: '/inventory',
         router: inventoryRouter,
+    },
+    {
+        path: '/customer',
+        router: customerRouter,
+    },
+    {
+        path: '/review',
+        router: reviewRouter,
+    },
+    {
+        path: '/notification',
+        router: notificationRouter,
     },
     
 ];

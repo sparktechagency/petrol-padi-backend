@@ -9,12 +9,14 @@ import deleteOldFile from "../../../utilities/deleteFile";
 const findLowestHighestFuelRateService = async (locationQuery: Record<string,unknown>) => {
 
     //if filter is needed by location then have to add filter by location
+    //location default value will be customer's own location/city
+    const { location } = locationQuery;
 
     //highest and lowest rate fuel
     const result = await SupplierModel.aggregate([
         {
             $match: {
-                location: { $regex: locationQuery, $options: "i" } // case-insensitive match
+                location: { $regex: location, $options: "i" } // case-insensitive match
             }
         },
         {
@@ -71,7 +73,8 @@ const findLowestHighestFuelRateService = async (locationQuery: Record<string,unk
     const suppliers = await SupplierModel.aggregate([
         {
             $match: {
-                location: { $regex: locationQuery, $options: "i" } // case-insensitive match
+                location: { $regex: location, $options: "i" }, // case-insensitive match
+                isApproved: true
             }
         },
         {

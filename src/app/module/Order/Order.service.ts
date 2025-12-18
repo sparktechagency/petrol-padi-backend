@@ -2,14 +2,19 @@ import { JwtPayload } from "jsonwebtoken";
 import ApiError from "../../../error/ApiError";
 import { IOrder } from "./Order.interface";
 import OrderModel from "./Order.model";
-import { ENUM_FUEL_TYPE, ENUM_ORDER_STATUS } from "../../../utilities/enum";
+import { ENUM_FUEL_TYPE, ENUM_ORDER_STATUS, ENUM_PAYMENT_STATUS } from "../../../utilities/enum";
 import postNotification from "../../../utilities/postNotification";
 import SupplierModel from "../Supplier/Supplier.model";
+import { refundPayment } from "../../../helper/paystackHelper";
+import PaymentModel from "../Payment/Payment.model";
+import mongoose from "mongoose";
 
 //customer
 const createOrderService = async (userDetails: JwtPayload, payload: Partial<IOrder>) => {
 
     const {profileId} = userDetails;
+
+    //check supplier has stock or not
 
     const order = await OrderModel.create({customer: profileId,...payload});
 
@@ -25,20 +30,12 @@ const createOrderService = async (userDetails: JwtPayload, payload: Partial<IOrd
     
 };
 
-const getAllOrderService = async (query: Record<string,unknown>) => {
+const getAllOrderService = async (userDetails: JwtPayload,query: Record<string,unknown>) => {
+    const {profileId} = userDetails;
+    const {  orderStatus} = query;
+    
 
-    const { customerId, orderStatus} = query;
-
-    let filterQuery: Object;
-
-    if(orderStatus === "Completed"){
-        filterQuery = {customer: customerId, status: {$eq: ENUM_ORDER_STATUS.COMPLETED}}
-    }
-    else{
-        filterQuery = {customer: customerId, status: {$ne: ENUM_ORDER_STATUS.COMPLETED}}
-    }
-
-    const allOrder = await OrderModel.find(filterQuery).populate({path: "supplier", select:"name email"}).select("fuelType quantity totalPrice createdAt").lean();
+    const allOrder = await OrderModel.find({customer: profileId, status: orderStatus}).populate({path: "supplier", select:"name email"}).select("fuelType quantity totalPrice createdAt").lean();
 
     return allOrder;
 }
@@ -54,30 +51,106 @@ const singleOrderService = async (orderId: string) => {
 }
 
 const cancelOrderService = async (orderId: string) => {
+  const session = await mongoose.startSession();
 
-    //order will be deleted/canceled
-    const order = await OrderModel.findByIdAndUpdate(orderId,{
-        status: ENUM_ORDER_STATUS.CANCELED
-    },{new: true});
+  try {
+    session.startTransaction();
 
-    //adust fuel stock
+    // 1️⃣ Fetch order
+    const order = await OrderModel.findById(orderId)
+      .populate({ path: "supplier", select: "name" })
+        .populate({ path: "customer", select: "name" })
+            .session(session);
 
-    //adjust reserve fuel stock
-
-    if(order.status !== ENUM_ORDER_STATUS.CANCELED){
-        throw new ApiError(500,"failed to cancel a order");
-    }else {
-
-        //admin will receive a notification
-        //supplier will receive a notification
+    if (!order) {
+      throw new ApiError(404, "Order not found to cancel request.");
     }
 
+    if (!order.supplier || !order.customer) {
+      throw new ApiError(400, "Order has invalid supplier or customer");
+    }
 
-    //payment will be refund
+    // 2️⃣ Fetch supplier
+    const supplier = await SupplierModel.findById(order.supplier).session(session);
 
-    
+    if (!supplier) {
+      throw new ApiError(404, "Supplier not found");
+    }
 
-}
+    // 3️⃣ Adjust stock
+    if (order.fuelType === ENUM_FUEL_TYPE.FUEL) {
+
+      supplier.todayReservedFuelForDelivery -= order.quantity;
+      supplier.todayFuelStock += order.quantity;
+
+    } else if (order.fuelType === ENUM_FUEL_TYPE.DIESEL) {
+
+      supplier.todayReservedDieselForDelivery -= order.quantity;
+      supplier.todayDieselStock += order.quantity;
+    }
+
+    // 4️⃣ Update order state
+    order.status = ENUM_ORDER_STATUS.CANCELED;
+    order.paymentStatus = "Refund_Pending";
+
+    await Promise.all([
+      supplier.save({ session }),
+      order.save({ session }),
+    ]);
+
+    // 5️⃣ Update payment record (refund pending)
+    const payment = await PaymentModel.findOneAndUpdate(
+      { reference: order.reference },
+      { status: ENUM_PAYMENT_STATUS.REFUND_PENDING },
+      { new: true, session }
+    );
+
+    if (!payment) {
+      throw new ApiError(404, "Payment record not found");
+    }
+
+    // 6️⃣ Commit DB transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    // 7️⃣ Fire notifications (non-blocking)
+    Promise.allSettled([
+      postNotification({
+        title: `${order.customer.name} canceled ${order.quantity}L ${order.fuelType} order from ${order.supplier.name}.`,
+      }),
+      postNotification({
+        toId: order.customer._id,
+        title: `Your ${order.quantity}L ${order.fuelType} order has been canceled. Refund is processing.`,
+      }),
+      postNotification({
+        toId: order.supplier._id,
+        title: `Order of ${order.quantity}L ${order.fuelType} was canceled by ${order.customer.name}.`,
+      }),
+    ]);
+
+    // 8️⃣ Call Paystack refund (OUTSIDE transaction)
+    const refundResult = await refundPayment(order.reference, order.totalPrice);
+
+    if (!refundResult?.status) {
+      // Do NOT rollback DB — webhook or cron will retry
+      throw new ApiError(500, "Refund initiation failed.");
+    }
+
+    return {
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      quantity: order.quantity,
+      fuelType: order.fuelType,
+    };
+
+  } catch (error) {
+
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 
 const confirmOrderService = async (orderId: string) => {
 
@@ -87,44 +160,47 @@ const confirmOrderService = async (orderId: string) => {
         .populate({path: "customer",select:"name"});
 
     if (!order) {
-        throw new ApiError(404, "Order not found to complete order");
+        throw new ApiError(404, "Order not found to confirm order");
     }
 
     if (!order.supplier || !order.customer) {
         throw new ApiError(400, "Order has invalid supplier or customer");
     }
 
-    const supplier = await SupplierModel.findById(order.supplier);
+    // const supplier = await SupplierModel.findById(order.supplier);
 
-    if(order.fuelType === ENUM_FUEL_TYPE.FUEL){
-        //adjust reserve fuel
-        supplier.todayReservedFuelForDelivery -= order.quantity;
+    // if(order.fuelType === ENUM_FUEL_TYPE.FUEL){
+    //     //adjust reserve fuel
+    //     supplier.todayReservedFuelForDelivery -= order.quantity;
     
-    }
+    // }
 
-    else if( order.fuelType === ENUM_FUEL_TYPE.DIESEL){
-        //adjust reserve fuel
-        supplier.todayReservedDieselForDelivery -= order.quantity;
-    }
+    // else if( order.fuelType === ENUM_FUEL_TYPE.DIESEL){
+    //     //adjust reserve fuel
+    //     supplier.todayReservedDieselForDelivery -= order.quantity;
+    // }
 
     //update order status
-    order.status = ENUM_ORDER_STATUS.COMPLETED;
+    order.status = ENUM_ORDER_STATUS.CONFIRMED;
 
-    await Promise.all([ order.save(), supplier.save() ]);
+    await Promise.all([ 
+        order.save(), 
+        // supplier.save() 
+    ]);
 
-    if(order.status !== ENUM_ORDER_STATUS.COMPLETED){
+    if(order.status !== ENUM_ORDER_STATUS.CONFIRMED){
         throw new ApiError(500,"Failed to Confirm order");
     }else {
 
         await Promise.all([
             //admin will receive a notification
-            postNotification({title: `${order?.supplier?.name}  completed ${order?.quantity}L ${order?.fuelType} delivery request to Mr. ${order?.customer?.name}, address: ${order?.location}.`}),
+            postNotification({title: `Mr. ${order?.customer?.name}  confirmed ${order?.quantity}L ${order?.fuelType} delivery order from  ${order?.customer?.name}, address: ${order?.location}.`}),
             
             //customer will receive a notification
-            postNotification({toId: order?.customer?._id, title: `Your ${order?.quantity}L ${order?.fuelType} request is completed by ${order?.supplier?.name}. Give a feedback, rating to him.`}),
+            postNotification({toId: order?.customer?._id, title: `You confirmed ${order?.quantity}L ${order?.fuelType} delivery order from ${order?.supplier?.name}. Give a feedback, rating to him.`}),
             
             //supplier will receive a notification
-            postNotification({toId: order?.supplier?._id, title: `You successfully completed ${order?.quantity}L ${order?.fuelType} delivery request to Mr. ${order?.customer?.name}, address: ${order?.location}.`})
+            postNotification({toId: order?.supplier?._id, title: `Your ${order?.quantity}L ${order?.fuelType} delivery order is confirmed by Mr. ${order?.customer?.name}, address: ${order?.location}.`})
         ]);
     }
 
@@ -140,68 +216,104 @@ const confirmOrderService = async (orderId: string) => {
 }
 
 const rejectOrderService = async (orderId: string) => {
+    const session = await mongoose.startSession();
 
-    //order will be deleted/canceled
-    const order = await OrderModel.findById(orderId)
-        .populate({path: "supplier",select:"name"})
-        .populate({path: "customer",select:"name"});
+    try {
+        session.startTransaction();
 
-    if (!order) {
-        throw new ApiError(404, "Order not found to reject request");
-    }
-
-    if (!order.supplier || !order.customer) {
-        throw new ApiError(400, "Order has invalid supplier or customer");
-    }
-
-    const supplier = await SupplierModel.findById(order.supplier);
-
-    if(order.fuelType === ENUM_FUEL_TYPE.FUEL){
-        //adjust reserve fuel
-        supplier.todayReservedFuelForDelivery -= order.quantity;
+        //order will be deleted/canceled
+        const order = await OrderModel.findById(orderId)
+            .populate({path: "supplier",select:"name"})
+                .populate({path: "customer",select:"name"})
+                    .session(session);
     
-        //adjust fuel stock
-        supplier.todayFuelStock += order.quantity; 
-    }
-
-    else if( order.fuelType === ENUM_FUEL_TYPE.DIESEL){
-        //adjust reserve fuel
-        supplier.todayReservedDieselForDelivery -= order.quantity;
+        if (!order) {
+            throw new ApiError(404, "Order not found to reject request");
+        }
     
-        //adjust fuel stock
-        supplier.todayDieselStock += order.quantity; 
-
-    }
-
-    //update order status
-    order.status = ENUM_ORDER_STATUS.REJECTED;
-
-    await Promise.all([ order.save(), supplier.save() ]);
-
-    if(order.status !== ENUM_ORDER_STATUS.REJECTED){
-        throw new ApiError(500,"Failed to reject order");
-    }else {
-
-        await Promise.all([
-            //admin will receive a notification
-            postNotification({title: `${order?.customer?.name}  rejected ${order?.quantity}L ${order?.fuelType} order request from Mr. ${order?.supplier?.name}, address: ${order?.location}.`}),
-            
-            //customer will receive a notification
-            postNotification({toId: order?.customer?._id, title: `You rejected ${order?.quantity}L ${order?.fuelType} delivery request, supplier: ${order?.supplier?.name}. your payment will be refunded.`}),
-            
-            //supplier will receive a notification
-            postNotification({toId: order?.supplier?._id, title: `Your pending  ${order?.quantity}L ${order?.fuelType} delivery request is rejected by  Mr. ${order?.customer?.name}, address: ${order?.location}.`})
-        ]);
-    }
-
-    return {status: order.status, quantity: order.quentity, fuelType: order.fuelType};
-
-
-    //not sure what will happen with the payment after rejection
-    //need clarification
+        if (!order.supplier || !order.customer) {
+            throw new ApiError(400, "Order has invalid supplier or customer");
+        }
     
-
+        const supplier = await SupplierModel.findById(order.supplier).session(session);
     
+        if(order.fuelType === ENUM_FUEL_TYPE.FUEL){
+            //adjust reserve fuel
+            supplier.todayReservedFuelForDelivery -= order.quantity;
+        
+            //adjust fuel stock
+            supplier.todayFuelStock += order.quantity; 
+        }
+    
+        else if( order.fuelType === ENUM_FUEL_TYPE.DIESEL){
+            //adjust reserve fuel
+            supplier.todayReservedDieselForDelivery -= order.quantity;
+        
+            //adjust fuel stock
+            supplier.todayDieselStock += order.quantity; 
+    
+        }
+    
+        //update order status
+        order.status = ENUM_ORDER_STATUS.REJECTED;
+        order.paymentStatus = "Refund_pending";
+
+        await Promise.all([ order.save({session}), supplier.save({session}) ]);
+
+        // 5️⃣ Update payment record (refund pending)
+        const payment = await PaymentModel.findOneAndUpdate(
+            { reference: order.reference },
+            { status: ENUM_PAYMENT_STATUS.REFUND_PENDING },
+            { new: true, session }
+        );
+
+        if (!payment) {
+            throw new ApiError(404, "Payment record not found.");
+        }
+
+        //commit db transaction
+        await session.commitTransaction();
+        session.endSession();
+    
+        if(order.status !== ENUM_ORDER_STATUS.REJECTED){
+            throw new ApiError(500,"Failed to reject order.");
+        }else {
+    
+            await Promise.all([
+                //admin will receive a notification
+                postNotification({title: `${order?.customer?.name}  rejected ${order?.quantity}L ${order?.fuelType} order request from Mr. ${order?.supplier?.name}, address: ${order?.location}.`}),
+                
+                //customer will receive a notification
+                postNotification({toId: order?.customer?._id, title: `You rejected ${order?.quantity}L ${order?.fuelType} delivery request, supplier: ${order?.supplier?.name}. your payment will be refunded.`}),
+                
+                //supplier will receive a notification
+                postNotification({toId: order?.supplier?._id, title: `Your pending  ${order?.quantity}L ${order?.fuelType} delivery request is rejected by  Mr. ${order?.customer?.name}, address: ${order?.location}.`})
+            ]);
+        }
+    
+        
+        // 8️⃣ Call Paystack refund (OUTSIDE transaction)
+        const refundResult = await refundPayment(order.reference, order.totalPrice);
+
+        if (!refundResult?.status) {
+            // Do NOT rollback DB — webhook or cron will retry
+            throw new ApiError(500, "Refund initiation failed");
+        }
+
+        return {
+            status: order.status,
+            paymentStatus: order.paymentStatus,
+            quantity: order.quantity,
+            fuelType: order.fuelType,
+        };
+
+    } catch (error) {
+        
+        await session.abortTransaction();
+        session.endSession();
+        console.log(error);
+        throw error;
+    }
 
 }
 
@@ -333,6 +445,66 @@ const orderOnTheWayService = async (orderId: string) => {
 
 }
 
+const completeOrderService = async (orderId: string) => {
+
+    //order will be deleted/canceled
+    const order = await OrderModel.findById(orderId)
+        .populate({path: "supplier",select:"name"})
+        .populate({path: "customer",select:"name"});
+
+    if (!order) {
+        throw new ApiError(404, "Order not found to complete order");
+    }
+
+    if (!order.supplier || !order.customer) {
+        throw new ApiError(400, "Order has invalid supplier or customer");
+    }
+
+    const supplier = await SupplierModel.findById(order.supplier);
+
+    if(order.fuelType === ENUM_FUEL_TYPE.FUEL){
+        //adjust reserve fuel
+        supplier.todayReservedFuelForDelivery -= order.quantity;
+    
+    }
+
+    else if( order.fuelType === ENUM_FUEL_TYPE.DIESEL){
+        //adjust reserve fuel
+        supplier.todayReservedDieselForDelivery -= order.quantity;
+    }
+
+    //update order status
+    order.status = ENUM_ORDER_STATUS.COMPLETED;
+
+    await Promise.all([ order.save(), supplier.save() ]);
+
+    if(order.status !== ENUM_ORDER_STATUS.COMPLETED){
+        throw new ApiError(500,"Failed to Confirm order");
+    }else {
+
+        await Promise.all([
+            //admin will receive a notification
+            postNotification({title: `${order?.supplier?.name}  completed ${order?.quantity}L ${order?.fuelType} delivery request to Mr. ${order?.customer?.name}, address: ${order?.location}.`}),
+            
+            //customer will receive a notification
+            postNotification({toId: order?.customer?._id, title: `Your ${order?.quantity}L ${order?.fuelType} request is completed by ${order?.supplier?.name}. Now you confirm the order and Give a feedback, rating to the supplier.`}),
+            
+            //supplier will receive a notification
+            postNotification({toId: order?.supplier?._id, title: `You successfully completed ${order?.quantity}L ${order?.fuelType} delivery request to Mr. ${order?.customer?.name}, address: ${order?.location}. Now wait for client's confirmation. `})
+        ]);
+    }
+
+    return {status: order.status, quantity: order.quentity, fuelType: order.fuelType};
+
+
+    //payment will be added to supplier account.
+    // as the order is completed
+    //here mongoose session have to use
+
+    
+
+}
+
 
 const deleteOrderService = async (orderId: string) => {
 
@@ -384,6 +556,7 @@ const OrderServices = {
     getAllOrderService,
     singleOrderService,
     cancelOrderService,
+    completeOrderService,
     confirmOrderService,
     rejectOrderService,
     supplierAllOrderService,

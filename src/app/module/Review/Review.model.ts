@@ -1,5 +1,5 @@
-import { model, Schema } from "mongoose";
-        import { IReview } from "./Review.interface";
+import { model, models, Schema } from "mongoose";
+import { IReview } from "./Review.interface";
 
 const ReviewSchema = new Schema<IReview>({
     supplier: { type: Schema.Types.ObjectId, required: true, ref: "User" },
@@ -8,5 +8,6 @@ const ReviewSchema = new Schema<IReview>({
     rating: { type: Number, default: 0 }
 }, { timestamps: true });
 
-const ReviewModel = model<IReview>("Review", ReviewSchema);
+const ReviewModel = models.Review || model<IReview>("Review", ReviewSchema);
+
 export default ReviewModel;

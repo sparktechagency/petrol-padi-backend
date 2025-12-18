@@ -1,11 +1,16 @@
 import express from "express";
-import {auth} from "../../middlewares/auth";
+import {auth, authorizeUser} from "../../middlewares/auth";
 import validateRequest from "../../middlewares/validateRequest";
 import CustomerValidations from "./Customer.validation";
 import CustomerController from "./Customer.controller";
 
 
 const customerRouter = express.Router();
+
+customerRouter.get("/get-profile-detail",
+    authorizeUser,
+    CustomerController.getprofileDetail
+);
 
 //dashboard
 customerRouter.get("/dashboard-all-customer",

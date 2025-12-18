@@ -10,7 +10,8 @@ const adminSchema = new Schema<IAdmin>({
     },
     email:{
         type: String,
-        required: [true,"Admin email is required."]
+        required: [true,"Admin email is required."],
+        unique: true
     },
     password:{
         type: String,

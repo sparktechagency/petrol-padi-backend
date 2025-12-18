@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import PaymentModel from "./Payment.model";
 import { ENUM_PAYMENT_STATUS } from "../../../utilities/enum";
+import OrderModel from "../Order/Order.model";
 
 export const paystackWebhookHandler = async (req: Request, res: Response) => {
 
@@ -60,9 +61,9 @@ export const paystackWebhookHandler = async (req: Request, res: Response) => {
             }
 
             // Idempotency — avoid double update
-            if (payment.status === ENUM_PAYMENT_STATUS.REFUNDED) {
-                return res.status(200).send("Refund already handled");
-            }
+            // if (payment.status === ENUM_PAYMENT_STATUS.REFUNDED) {
+            //     return res.status(200).send("Payment Refund already handled");
+            // }
 
             // Update Payment record
             await PaymentModel.findOneAndUpdate(
@@ -83,15 +84,15 @@ export const paystackWebhookHandler = async (req: Request, res: Response) => {
             );
 
             // OPTIONAL: update the related order
-            // if (payment.orderId) {
-            //     await OrderModel.findByIdAndUpdate(payment.orderId, {
-            //     paymentStatus: "Refunded",
-            //     });
-            // }
+            if (payment.orderId) {
+                await OrderModel.findByIdAndUpdate(payment.orderId, {
+                    paymentStatus: "Refunded",
+                });
+            }
 
             // logger?.info?.(`Refund processed for ${reference}`);
 
-            return res.status(200).send("Refund processed");
+            return res.status(200).send("Refund processed.");
 
         }
 
@@ -106,6 +107,7 @@ export const paystackWebhookHandler = async (req: Request, res: Response) => {
             await PaymentModel.findOneAndUpdate(
                 { reference },
                 {
+                // status: ENUM_PAYMENT_STATUS.REFUND_PENDING,
                 metadata: {
                     refundFailure: {
                         refundId: eventData.id,
@@ -117,7 +119,7 @@ export const paystackWebhookHandler = async (req: Request, res: Response) => {
             }
             );
 
-            return res.status(200).send("Refund failure logged");
+            return res.status(200).send("Refund failure logged.");
         }
 
         return res.status(200).send("Event ignored");

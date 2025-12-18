@@ -13,9 +13,9 @@ reviewRouter.post("/create-new-review",
         ReviewController.createReview
 );
 
-reviewRouter.post("/get-all-review",
+reviewRouter.get("/get-all-review",
         //auth,
-        validateRequest(ReviewValidations.getAllReviewValidation),
+        // validateRequest(ReviewValidations.getAllReviewValidation),
         ReviewController.getAllReview
 );
 

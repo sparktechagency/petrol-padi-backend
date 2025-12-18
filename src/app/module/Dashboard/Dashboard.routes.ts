@@ -1,6 +1,6 @@
 import express from "express";
 import validateRequest from "../../middlewares/validateRequest";
-import {auth} from "../../middlewares/auth";
+import {auth, authorizeUser} from "../../middlewares/auth";
 import { adminLoginValidation, changeAdminPasswordValidation, createAdminvalidation, editProfilevalidation } from "./Dashboard.validation";
 import DashboardController from "./Dashboard.controller";
 import AuthValidations from "../auth/auth.validation";
@@ -33,12 +33,14 @@ dashboardRouter.post("/admin-send-verify-code",
 );
 
 dashboardRouter.patch("/admin-reset-password",
+    authorizeUser,
     validateRequest(AuthValidations.resetPasswordValidation)  ,
     DashboardController.adminResetPassword
 );
 
 dashboardRouter.patch("/edit-admin-profile",
     // auth(["Super_Admin"]),
+    authorizeUser,
     uploadProfile.single('admin-image'),
     validateRequest(editProfilevalidation),
     DashboardController.editAdminProfile
@@ -46,17 +48,19 @@ dashboardRouter.patch("/edit-admin-profile",
 
 dashboardRouter.patch("/change-admin-password",
     // auth(["Super_Admin"]),
+    authorizeUser,
     validateRequest(changeAdminPasswordValidation),
     DashboardController.changeAdminPassword
 );
 
 dashboardRouter.delete("/delete-admin",
     // auth(["Super_Admin"]),
+    authorizeUser,
     // validateRequest(adminLoginValidation),
     DashboardController.deleteAdminAccount
 );
 
-dashboardRouter.post("/block-admin",
+dashboardRouter.post("/block-admin/:id",
     // auth(["Super_Admin"]), only super admin can block a admin
     // validateRequest(adminLoginValidation),
     DashboardController.blockAdmin

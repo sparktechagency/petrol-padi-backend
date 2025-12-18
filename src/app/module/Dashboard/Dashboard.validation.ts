@@ -3,7 +3,7 @@ import {z} from "zod";
 export const createAdminvalidation = z.object({
   body: z.object({
     name: z.string().min(1, "Profile id is required"),
-    email: z.string().email().min(1, "Valid email required"),
+    email: z.string().email("Valid email required"),
     phone: z.string().min(5, "Phone Number is required"),
     password: z.string().min(5, "Password is required"),
   })
@@ -12,9 +12,9 @@ export const createAdminvalidation = z.object({
 export const editProfilevalidation = z.object({
   body: z.object({
     name: z.string().min(1, "Profile id is required").optional(),
-    email: z.string().email().min(1, "Valid email required").optional(),
+    // email: z.string().email().min(1, "Valid email required").optional(),
     phone: z.string().min(5, "Phone Number is required").optional(),
-    password: z.string().min(5, "Password is required").optional(),
+    // password: z.string().min(5, "Password is required").optional(),
   })
 });
 

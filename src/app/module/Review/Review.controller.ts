@@ -7,9 +7,9 @@ const createReview = catchAsync(async (req, res) => {
     const result = await ReviewServices.createReviewService(req.body);
     
     sendResponse(res, {
-        statusCode: 200,
+        statusCode: 201,
         success: true,
-        message: "Profile updated successfully",
+        message: "You have successfully given a review.",
         data: result,
     });
 });

@@ -94,7 +94,7 @@ const loginAdminService = async (payload: TLoginUser) => {
         
     }
 
-    return {user: newUser,accessToken};
+    return { newUser,accessToken};
 }
 
 const adminVerifyCode = async (payload:{email: string, verifyCode: string}) => {
@@ -180,13 +180,10 @@ const adminSendVerifyCodeService = async (payload:{email: string}) => {
     return null;
 }
 
-// reset password
-const adminResetPasswordService = async (payload: {
-    email: string;
-    newPassword: string;
-    confirmPassword: string;
-}) => {
-    const { email, newPassword } = payload;
+
+const adminResetPasswordService = async (userDetails: JwtPayload,payload: {newPassword: string,confirmPassword: string}) => {
+    const { newPassword } = payload;
+    const {email} = userDetails;
 
     const admin = await AdminModel.findOne({ email: email });
 
@@ -294,8 +291,8 @@ const deleteAdminService = async (userDetails: JwtPayload) => {
     return null;
 }
 
-const blockAdminService = async (query: Record<string,unknown>) => {
-    const {userId} = query;
+const blockAdminService = async (userId: string) => {
+    // const {userId} = query;
     
     if(!userId){
         throw new ApiError(400,"Admin id is required to block a admin");

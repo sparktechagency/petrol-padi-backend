@@ -1,21 +1,55 @@
+import { JwtPayload } from "jsonwebtoken";
+import ApiError from "../../../error/ApiError";
+import { INotification } from "./Notification.interface";
+import {AdminNotificationModel, NotificationModel} from "./Notification.model";
 
-        import ApiError from "../../../error/ApiError";
-        import { INotification } from "./Notification.interface";
-        import NotificationModel from "./Notification.model";
+const getAllNotificationService = async (userDetails: JwtPayload) => {
 
-        const updateUserProfile = async (id: string, payload: Partial<INotification>) => {
-            if (payload.email || payload.username) {
-                throw new ApiError(400, "You cannot change the email or username");
-            }
-            const user = await NotificationModel.findById(id);
-            if (!user) {
-                throw new ApiError(404, "Profile not found");
-            }
-            return await NotificationModel.findByIdAndUpdate(id, payload, {
-                new: true,
-                runValidators: true,
-            });
-        };
+    const {profileId} = userDetails;
 
-        const NotificationServices = { updateUserProfile };
-        export default NotificationServices;
+    const allNotification = await NotificationModel.find({toId: profileId}).sort({createdAt: -1}).lean();
+
+    return allNotification;
+    
+};
+
+
+const deleteNotification = async (id: string) => {
+    
+    const deletedNotification = await NotificationModel.findByIdAndDelete(id);
+
+    if(!deletedNotification){
+        throw new ApiError(500,"Failed to delete notification");
+    }
+    return deletedNotification;
+    
+};
+
+//dashboard
+
+const deleteAdminNotification = async (id: string) => {
+    
+    const deletedNotification = await AdminNotificationModel.findByIdAndDelete(id);
+
+    if(!deletedNotification){
+        throw new ApiError(500,"Failed to delete notification");
+    }
+    return deletedNotification;
+    
+};
+
+const getAllAdminNotificationService = async () => {
+
+    const allNotification = await AdminNotificationModel.find({}).sort({createdAt: -1}).lean();
+
+    return allNotification;
+    
+};
+
+
+const NotificationServices = { getAllNotificationService, 
+    getAllAdminNotificationService ,
+    deleteAdminNotification,
+    deleteNotification
+};
+export default NotificationServices;

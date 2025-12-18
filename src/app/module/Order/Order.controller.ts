@@ -21,7 +21,9 @@ const createNewOrder = catchAsync(async (req, res) => {
 
 const getAllOrder = catchAsync(async (req, res) => {
 
-    const result = await OrderServices.getAllOrderService(req.query);
+     const { user } = req as AuthRequest;
+
+    const result = await OrderServices.getAllOrderService(user,req.query);
    
     sendResponse(res, {
         statusCode: 200,

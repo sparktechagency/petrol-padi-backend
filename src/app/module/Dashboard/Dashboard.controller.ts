@@ -1,3 +1,4 @@
+import { AuthRequest } from "../../../interface/authRequest";
 import catchAsync from "../../../utilities/catchasync";
 import sendResponse from "../../../utilities/sendResponse";
 import DashboardService from "./Dashboard.service";
@@ -54,8 +55,10 @@ const adminSendVerifyCode = catchAsync(async (req, res) => {
 });
 
 const adminResetPassword = catchAsync(async (req, res) => {
+
+     const { user } = req as AuthRequest;
     
-    const result = await DashboardService.adminResetPasswordService(req.body);
+    const result = await DashboardService.adminResetPasswordService(user,req.body);
 
     sendResponse(res, {
         statusCode: 200,
@@ -67,33 +70,39 @@ const adminResetPassword = catchAsync(async (req, res) => {
 
 const editAdminProfile = catchAsync(
     async (req,res) => {
-        // const result = await DashboardService.editProfileService(req.user,req.file,req.body);
+         const { user } = req as AuthRequest;
+
+        const result = await DashboardService.editProfileService(user,req.file,req.body);
 
         sendResponse(res,{
             statusCode: 200,
             success: true,
             message: "Updated admin data successfully",
-            data: null
+            data: result
         });
     }
 );
 
 const changeAdminPassword = catchAsync(
     async (req,res) => {
-        // const result = await DashboardService.changeAdminPasswordService(req.user,req.body);
+
+         const { user } = req as AuthRequest;
+
+        const result = await DashboardService.changeAdminPasswordService(user,req.body);
 
         sendResponse(res,{
             statusCode: 200,
             success: true,
             message: "Admin password changed successfully",
-            data: null
+            data: result
         });
     }
 );
 
 const deleteAdminAccount = catchAsync(
     async (req,res) => {
-        // const result = await DashboardService.deleteAdminService(req.user);
+         const { user } = req as AuthRequest;
+        const result = await DashboardService.deleteAdminService(user);
 
         sendResponse(res,{
             statusCode: 200,
@@ -119,7 +128,7 @@ const dashboardStat = catchAsync(
 
 const blockAdmin = catchAsync(
     async (req,res) => {
-        const result = await DashboardService.blockAdminService(req.query);
+        const result = await DashboardService.blockAdminService(req.params.id);
 
         sendResponse(res,{
             statusCode: 200,

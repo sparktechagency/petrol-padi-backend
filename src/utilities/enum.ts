@@ -10,6 +10,7 @@ export const ENUM_ORDER_STATUS = {
   ACCEPTED: 'Accepted',
   ON_THE_WAY: 'On_The_Way',
   COMPLETED: 'Completed',
+  CONFIRMED: 'Confirmed',
   CANCELED: 'Canceled',
   REJECTED: 'Rejected'
 };
@@ -23,6 +24,7 @@ export const ENUM_PAYMENT_STATUS = {
   PENDING : "Pending",
   SUCCESS : "Success",
   FAILED : "Failed",
+  REFUND_PENDING: "Refund_pending",
   REFUNDED : "Refunded",
 }
 

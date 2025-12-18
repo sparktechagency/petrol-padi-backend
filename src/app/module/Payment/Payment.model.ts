@@ -19,7 +19,7 @@ const PaymentSchema = new Schema<IPayment>(
     reference: {
       type: String,
       required: true,
-      unique: [true,"Payment reference is required to make payment"],
+      unique: [true,"Unique payment reference is required to make payment"],
     },
 
     provider: {

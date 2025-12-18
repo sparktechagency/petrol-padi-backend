@@ -9,14 +9,14 @@ const orderRouter = express.Router();
 
 //customer
 orderRouter.post("/create-new-order",
-        //authorization,
+        authorizeUser,
         validateRequest(OrderValidations.createOrderValidation),
         OrderController.createNewOrder
 );
 
 orderRouter.get("/customer-all-order",
-        //authorization,
-        validateRequest(OrderValidations.getAllOrderValidation),
+        authorizeUser,
+        validateRequest(OrderValidations.getsupplierOrderValidation),
         OrderController.getAllOrder
 );
 
@@ -58,6 +58,12 @@ orderRouter.get("/supplier-single-order/:orderId",
 );
 
 orderRouter.post("/accept-order/:orderId",
+        //authorization,
+        // validateRequest(OrderValidations.getAllOrderValidation),
+        OrderController.acceptOrder
+);
+
+orderRouter.post("/complete-order/:orderId",
         //authorization,
         // validateRequest(OrderValidations.getAllOrderValidation),
         OrderController.acceptOrder

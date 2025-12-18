@@ -6,7 +6,11 @@ import mongoose from "mongoose";
 
 const createReviewService = async ( payload: IReview) => {
 
-    const review = await ReviewModel.create({...payload});
+    const review = await ReviewModel.create(payload);
+
+    if(!review){
+        throw new ApiError(500,"Failed to create new review.");
+    }
 
     return review;
 };

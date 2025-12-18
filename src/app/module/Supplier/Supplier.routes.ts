@@ -9,7 +9,7 @@ import { uploadDocument } from "../../../helper/multerUpload";
 const supplierRouter = express.Router();
 
 
-supplierRouter.get("/find-lowest-highest-rate",
+supplierRouter.get("/find-nearest-supplier",
   SupplierController.findLowestHighestFuelRate  
 );
 
@@ -59,13 +59,13 @@ supplierRouter.get("/get-supplier-detail/:supplierId",
 supplierRouter.patch("/approve-supplier/:supplierId",
     
     // validateRequest(SupplierValidations.getRateValidation),
-  SupplierController.getSupplierDetails  
+  SupplierController.approveSupplier  
 );
 
 supplierRouter.delete("/delete-supplier/:supplierId",
     
     // validateRequest(SupplierValidations.getRateValidation),
-  SupplierController.getSupplierDetails  
+  SupplierController.deleteSupplier  
 );
 
 

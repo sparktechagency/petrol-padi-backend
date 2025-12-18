@@ -5,7 +5,30 @@ import CustomerModel from "./Customer.model";
 import { ENUM_USER_ROLE } from "../../../utilities/enum";
 import UserModel from "../User/User.model";
 import AdminModel from "../Dashboard/Admin.model";
+import { JwtPayload } from "jsonwebtoken";
+import SupplierModel from "../Supplier/Supplier.model";
 
+
+const getProfileDetailService = async (userDetails: JwtPayload) => {
+
+    const {profileId,role} = userDetails;
+
+    let profile;
+
+    if(role === ENUM_USER_ROLE.CUSTOMER){
+        profile = await CustomerModel.findById(profileId).select("name email image location").lean();
+    }
+    else if(role === ENUM_USER_ROLE.SUPPLIER){
+        profile = await SupplierModel.findById(profileId).select("name email image location").lean();
+    }
+
+    if(!profile){
+        throw new ApiError(500,"Failed to get user profile detail.");
+    }
+
+    return profile;
+
+}
 
 // dashboard
 
@@ -49,6 +72,7 @@ const blockUserService = async (query: Record<string,unknown>) => {
 }
 
 const CustomerServices = { 
+    getProfileDetailService,
     getAllCustomerService,
     getSingleCustomerService,
     blockUserService
