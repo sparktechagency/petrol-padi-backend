@@ -5,7 +5,7 @@ import { Server as HTTPServer } from 'http'; // Import HTTPServer type
 import app from './app';
 import { errorLogger, logger } from './shared/logger';
 import config from './config';
-import mongoDBConnection from './connection/mongoDB';
+import mongoDBConnection from './config/mongoDB';
 import runCronJobEverydatAtNight from './helper/cronHelper';
 
 let myServer: HTTPServer | undefined;
@@ -55,3 +55,11 @@ async function main() {
 
 // Run the main function and log errors
 main().catch((err) => errorLogger.error('Main function error:', err));
+
+
+// "scripts": {
+//   "dev": "nodemon --watch src --exec tsx src/server.ts",
+//   "build": "tsc",
+//   "start": "node dist/server.js"
+// }
+

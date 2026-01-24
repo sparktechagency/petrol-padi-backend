@@ -24,4 +24,11 @@ inventoryRouter.get("/filter-inventory",
         InventoryController.filterInventory
 );
 
+//customer total spent
+inventoryRouter.get("/customer-total-spent",
+        authorizeUser,
+        // validateRequest(InventoryValidations.customerTotalSpentValidation),
+        InventoryController.customerTotalSpent
+);
+
 export default inventoryRouter;

@@ -46,9 +46,24 @@ const filterInventory = catchAsync(async (req, res) => {
     });
 });
 
+const customerTotalSpent = catchAsync(async (req, res) => {
+
+     const { user } = req as AuthRequest;
+
+    const result = await InventoryServices.totalSpentService(user,req.query);
+    
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Customer total spent retrieved successfully",
+        data: result,
+    });
+});
+
 const InventoryController = { 
     todayLoadFuel,
     getLoadedFuel,
-    filterInventory
+    filterInventory,
+    customerTotalSpent
  };
 export default InventoryController;

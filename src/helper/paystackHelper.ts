@@ -1,4 +1,4 @@
-import { paystackClient } from "../connection/paystack";
+import { paystackClient } from "../config/paystack";
 
 
 //initialize payment

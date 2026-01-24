@@ -18,6 +18,11 @@ const OrderSchema = new Schema<IOrder>({
     longitude: { type: String, required: true },
 }, { timestamps: true });
 
+//Add this to your Order schema for performance:
+OrderSchema.index({ customer: 1, createdAt: -1 });
+// OrderSchema.index({ customer: 1, createdAt: -1 });
+
+
 const OrderModel = models.Order || model<IOrder>("Order", OrderSchema);
 
 export default OrderModel;
