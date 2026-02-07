@@ -25,7 +25,7 @@ const registerUserService = async (payload: IUser) => {
     const emailExist = await UserModel.exists({ email: email });
 
     if (emailExist) {
-        throw new ApiError(400, 'This email already exists');
+        throw new ApiError(400, 'This email already exists. Please use another email.');
     }
 
     const session = await mongoose.startSession();
@@ -38,7 +38,7 @@ const registerUserService = async (payload: IUser) => {
         // Prepare user data
         const userDataPayload: Partial<IUser> = {
             name: name,
-            email: email,
+            email: email.toLowerCase(),
             phone: phone,
             password,
             role,
@@ -49,7 +49,7 @@ const registerUserService = async (payload: IUser) => {
 
         // Create user
         const [user] = await UserModel.create([userDataPayload], { session });
-        console.log(user);
+        // console.log(user);
         // Create profile (customer or provider)
         let profile;
 
@@ -124,17 +124,17 @@ const registerUserService = async (payload: IUser) => {
 
 const loginUserService = async (payload: TLoginUser) => {
 
-    const {email,password} = payload;
+    const {email ,password} = payload;
 
     // Service logic goes here
-    const user = await UserModel.findOne({ email: email });
+    const user = await UserModel.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-        throw new ApiError(404, 'This user does not exist');
+        throw new ApiError(404, 'This user does not exist. Please register first.');
     }
     
     if (user.isBlocked) {
-        throw new ApiError(403, 'This user is blocked');
+        throw new ApiError(403, 'This user is blocked. Please contact support.');
     }
     // if (!user.isVerified) {
     //     throw new ApiError(
@@ -153,7 +153,7 @@ const loginUserService = async (payload: TLoginUser) => {
     // }
 
     if(password !== user.password){
-        throw new ApiError(403,'Password do not match');
+        throw new ApiError(403,'Password do not match. Provide correct password.');
     }
 
 
@@ -186,7 +186,7 @@ const loginUserService = async (payload: TLoginUser) => {
 const verifyCode = async (payload:{email: string, verifyCode: string}) => {
     const { email, verifyCode } = payload;
 
-    const user = await UserModel.findOne({ email: email }).select("profile email role verificationCode isEmailVerified");
+    const user = await UserModel.findOne({ email: email.toLowerCase() }).select("profile email role verificationCode isEmailVerified");
 
     if (!user) {
         throw new ApiError(404, 'User not found to verify otp');
@@ -245,7 +245,7 @@ const verifyCode = async (payload:{email: string, verifyCode: string}) => {
 const sendVerifyCodeService = async (payload:{email: string}) => {
     const { email } = payload;
 
-    const user = await UserModel.findOne({ email: email });
+    const user = await UserModel.findOne({ email: email.toLowerCase() });
 
     if (!user) {
         throw new ApiError(404, 'User not found to send otp');
@@ -274,14 +274,14 @@ const resetPasswordService = async (payload: {
 }) => {
     const { email, newPassword } = payload;
 
-    const user = await UserModel.findOne({ email: email });
+    const user = await UserModel.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-        throw new ApiError(404, 'This user does not exist to reset password');
+        throw new ApiError(404, 'This user does not exist to reset password.');
     }
 
     if (user.isBlocked) {
-        throw new ApiError(403, 'This user is blocked. Cannot reset password');
+        throw new ApiError(403, 'This user is blocked. Cannot reset password.Contact support.');
     }
 
     //hash new password

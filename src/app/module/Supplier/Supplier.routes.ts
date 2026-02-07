@@ -13,6 +13,10 @@ supplierRouter.get("/find-nearest-supplier",
   SupplierController.findLowestHighestFuelRate  
 );
 
+supplierRouter.get("/search-supplier-by-name",
+  SupplierController.searchSupplierByName  
+);
+
 supplierRouter.get("/supplier-details",
   authorizeUser,
   SupplierController.supplierDetails 
@@ -36,16 +40,21 @@ supplierRouter.post("/upload-document",
   SupplierController.uploadDocument
 );
 
+supplierRouter.get("/get-supplier-revenue",
+  authorizeUser,
+  SupplierController.supplierRevenue
+);
+
 //dashboard
 
 supplierRouter.get("/get-supplier-request",
-    
+    authorizeUser,
     // validateRequest(SupplierValidations.getRateValidation),
   SupplierController.getAllSupplierRequest  
 );
 
 supplierRouter.get("/get-all-supplier",
-    
+    authorizeUser,
     // validateRequest(SupplierValidations.getRateValidation),
   SupplierController.getAllSupplier  
 );

@@ -13,7 +13,7 @@ reviewRouter.post("/create-new-review",
         ReviewController.createReview
 );
 
-reviewRouter.get("/get-all-review",
+reviewRouter.get("/get-all-review/:supplierId",
         //auth,
         // validateRequest(ReviewValidations.getAllReviewValidation),
         ReviewController.getAllReview

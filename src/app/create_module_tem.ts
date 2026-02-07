@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
 import fs from 'fs';
+import { modelNames } from 'mongoose';
 import path from 'path';
 
 // Function to create module folder and files inside a given profile folder
@@ -23,115 +24,99 @@ function createModule(profileName: string, moduleName: string): void {
     ];
 
     const defaultContents: Record<string, string> = {
-                [`${moduleName}.interface.ts`]: `import { Types } from "mongoose";
+        [`${moduleName}.interface.ts`]: `import { Types } from "mongoose";
 
-        export interface I${capitalize(moduleName)} {
-            user: Types.ObjectId;
-            name: string;
-            username?: string;
-            phone?: string;
-            email: string;
-            address?: string;
-            profile_image?: string;
-            totalAmount?: number;
-            totalPoint?: number;
-        }`,
+export interface I${capitalize(moduleName)} {
+    user: Types.ObjectId;
+    name: string;
+    username?: string;
+    phone?: string;
+    email: string;
+    address?: string;
+    profile_image?: string;
+    totalAmount?: number;
+    totalPoint?: number;
+}`,
 
-                [`${moduleName}.routes.ts`]: `import express from "express";
-        import auth from "../../middlewares/auth";
-        import validateRequest from "../../middlewares/validateRequest";
-        import ${moduleName}Validations from "./${moduleName}.validation";
-        import ${moduleName}Controller from "./${moduleName}.controller";
+        [`${moduleName}.routes.ts`]: `import express from "express";
+import auth from "../../middlewares/auth";
+import validateRequest from "../../middlewares/validateRequest";
+import ${moduleName}Validations from "./${moduleName}.validation";
+import ${moduleName}Controller from "./${moduleName}.controller";
+
+
+const ${moduleName}Router = express.Router();
+
+
+
+export default ${moduleName}Router;`,
+
+        [`${moduleName}.model.ts`]: `import { model, Schema, models } from "mongoose";
+import { I${capitalize(moduleName)} } from "./${moduleName}.interface";
+
+const ${moduleName}Schema = new Schema<I${capitalize(moduleName)}>({
+    user: { type: Schema.Types.ObjectId, required: true, ref: "User" },
+    name: { type: String, required: true },
+    phone: { type: String },
+    email: { type: String, required: true, unique: true },
+    address: { type: String },
+    profile_image: { type: String, default: "" },
+    totalAmount: { type: Number, default: 0 },
+    totalPoint: { type: Number, default: 0 }
+}, { timestamps: true });
+
+const ${moduleName}Model = models.${capitalize(moduleName)} || model<I${capitalize(moduleName)}>("${capitalize(
+            moduleName
+        )}", ${moduleName}Schema);
+
+export default ${moduleName}Model;`,
+
+        [`${moduleName}.controller.ts`]: `import catchAsync from "../../../utilities/catchasync";
+import sendResponse from "../../../utilities/sendResponse";
+import ${moduleName}Services from "./${moduleName}.service";
+
+const u = catchAsync(async (req, res) => {
+
+    const result = await ${moduleName}Services.updateUserProfile();
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "P",
+        data: result,
+    });
+});
+
+const ${capitalize(moduleName)}Controller = { u };
+
+export default ${capitalize(moduleName)}Controller;`,
+
+        [`${moduleName}.service.ts`]: `import ApiError from "../../../error/ApiError";
+import { I${capitalize(moduleName)} } from "./${moduleName}.interface";
+import ${moduleName}Model from "./${moduleName}.model";
+
+const u = async () => {
+
+};
+
+const ${capitalize(moduleName)}Services = { u };
+
+export default ${capitalize(moduleName)}Services;`,
+
+        [`${moduleName}.validation.ts`]: `import { z } from "zod";
+
         
+const u = z.object({
+    body: z.object({
+        name: z.string().optional(),
+        phone: z.string().optional(),
+        address: z.string().optional(),
+    }),
+});
 
-        const router = express.Router();
+const ${capitalize(moduleName)}Validations = { u };
 
-        
-
-        export const ${moduleName}Routes = router;`,
-
-                [`${moduleName}.model.ts`]: `import { model, Schema } from "mongoose";
-        import { I${capitalize(moduleName)} } from "./${moduleName}.interface";
-
-        const ${moduleName}Schema = new Schema<I${capitalize(moduleName)}>({
-            user: { type: Schema.Types.ObjectId, required: true, ref: "User" },
-            name: { type: String, required: true },
-            phone: { type: String },
-            email: { type: String, required: true, unique: true },
-            address: { type: String },
-            profile_image: { type: String, default: "" },
-            totalAmount: { type: Number, default: 0 },
-            totalPoint: { type: Number, default: 0 }
-        }, { timestamps: true });
-
-        const ${moduleName}Model = model<I${capitalize(moduleName)}>("${capitalize(
-                    moduleName
-                )}", ${moduleName}Schema);
-        export default ${moduleName}Model;`,
-
-                [`${moduleName}.controller.ts`]: `
-        import catchAsync from "../../../utilities/catchasync";
-        import sendResponse from "../../../utilities/sendResponse";
-        import ${moduleName}Services from "./${moduleName}.service";
-
-        const updateUserProfile = catchAsync(async (req, res) => {
-            const { files } = req;
-            if (files && typeof files === "object" && "profile_image" in files) {
-                req.body.profile_image = files["profile_image"][0].path;
-            }
-            const result = await ${moduleName}Services.updateUserProfile(
-                req.user.profileId,
-                req.body
-            );
-            sendResponse(res, {
-                statusCode: 200,
-                success: true,
-                message: "Profile updated successfully",
-                data: result,
-            });
-        });
-
-        const ${capitalize(moduleName)}Controller = { updateUserProfile };
-        export default ${capitalize(moduleName)}Controller;`,
-
-                [`${moduleName}.service.ts`]: `
-        import ApiError from "../../../error/ApiError";
-        import { I${capitalize(moduleName)} } from "./${moduleName}.interface";
-        import ${moduleName}Model from "./${moduleName}.model";
-
-        const updateUserProfile = async (id: string, payload: Partial<I${capitalize(
-                    moduleName
-                )}>) => {
-            if (payload.email || payload.username) {
-                throw new ApiError(400, "You cannot change the email or username");
-            }
-            const user = await ${moduleName}Model.findById(id);
-            if (!user) {
-                throw new ApiError(404, "Profile not found");
-            }
-            return await ${moduleName}Model.findByIdAndUpdate(id, payload, {
-                new: true,
-                runValidators: true,
-            });
-        };
-
-        const ${capitalize(moduleName)}Services = { updateUserProfile };
-        export default ${capitalize(moduleName)}Services;`,
-
-                [`${moduleName}.validation.ts`]: `import { z } from "zod";
-
-        export const update${capitalize(moduleName)}Data = z.object({
-            body: z.object({
-                name: z.string().optional(),
-                phone: z.string().optional(),
-                address: z.string().optional(),
-            }),
-        });
-
-        const ${capitalize(moduleName)}Validations = { update${capitalize(
-                    moduleName
-                )}Data };
-        export default ${capitalize(moduleName)}Validations;`,
+export default ${capitalize(moduleName)}Validations;`,
     };
 
     files.forEach((file) => {

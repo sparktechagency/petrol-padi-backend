@@ -16,8 +16,8 @@ export const addLocationValidation = z.object({
         // role: z.string().min(1, "Role is required"),
         location: z.string().min(1, "Location is required"),
         // userId: z.string().min(1, "userId is required"),
-        // latitude: z.string().min(1, "Latitude is required"),
-        // longitude: z.string().min(1, "Longitude is required"),
+        latitude: z.string().min(1, "Latitude is required"),
+        longitude: z.string().min(1, "Longitude is required"),
     }),
 });
 
@@ -26,6 +26,7 @@ export const addBankDetailValidation = z.object({
         bankName: z.string().min(1, "Bank name is required"),
         accountName: z.string().min(1, "Account name is required"),
         accountNumber: z.string().min(1, "Account number is required"),
+        bankCode: z.string().min(1, "Bank code is required"),
     }),
 });
 

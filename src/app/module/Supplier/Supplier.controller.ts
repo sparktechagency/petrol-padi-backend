@@ -15,6 +15,18 @@ const findLowestHighestFuelRate = catchAsync(async (req, res) => {
     });
 });
 
+const searchSupplierByName = catchAsync(async (req, res) => {
+    
+    const result = await SupplierServices.searchSupplierByNameService(req.query);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Retrieved all suppliers matching the name.",
+        data: result,
+    });
+});
+
 const supplierDetails = catchAsync(async (req, res) => {
 
      const { user } = req as AuthRequest;
@@ -71,29 +83,45 @@ const uploadDocument = catchAsync(async (req, res) => {
     });
 });
 
+const supplierRevenue = catchAsync(async (req, res) => {
+
+     const { user } = req as AuthRequest;
+
+    const result = await SupplierServices.supplierRevenueService(user,req.query);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Retrieved supplier revenue data.",
+        data: result,
+    });
+});
+
 // dashboard
 
 const getAllSupplier = catchAsync(async (req, res) => {
     
-    const result = await SupplierServices.getAllSupplierService();
+    const result: any = await SupplierServices.getAllSupplierService(req.query);
 
     sendResponse(res, {
         statusCode: 200,
         success: true,
         message: "Retrieved all supplier.",
-        data: result,
+        meta: result.meta,
+        data: result.allSupplier,
     });
 });
 
 const getAllSupplierRequest = catchAsync(async (req, res) => {
     
-    const result = await SupplierServices.getSupplierRequestService();
+    const result: any = await SupplierServices.getSupplierRequestService(req.query);
 
     sendResponse(res, {
         statusCode: 200,
         success: true,
         message: "Retrieved all supplier request.",
-        data: result,
+        meta: result.meta,
+        data: result.allSupplier,
     });
 });
 
@@ -135,10 +163,12 @@ const deleteSupplier = catchAsync(async (req, res) => {
 
 const SupplierController = {
     findLowestHighestFuelRate,
+    searchSupplierByName,
     supplierDetails,
     addFuelRate,
     getFuelRate,
     uploadDocument,
+    supplierRevenue,
     getAllSupplier,
     getAllSupplierRequest,
     getSupplierDetails,

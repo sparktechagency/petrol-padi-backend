@@ -20,8 +20,8 @@ async function main() {
     // logger.info('DB Connected Successfully');
 
     // call run cron job
-    runCronJobEverydatAtNight();
-    console.log("Cron job scheduled.");
+    // runCronJobEverydatAtNight();
+    // console.log("Cron job scheduled.");
 
     myServer = app.listen(port, () => {
     //   logger.info(`Server running on http://0.0.0.0:${port}`);

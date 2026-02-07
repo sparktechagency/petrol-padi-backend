@@ -46,10 +46,35 @@ const getAllAdminNotificationService = async () => {
     
 };
 
+const makeNotificationSeen = async (id: string) => {
 
-const NotificationServices = { getAllNotificationService, 
+    const updatedNotification = await NotificationModel.findByIdAndUpdate(id,{isSeen: true},{new:true});
+
+    if(!updatedNotification){
+        throw new ApiError(500,"Failed to update notification status");
+    }
+    return updatedNotification;
+    
+}
+
+const makeAdminNotificationSeen = async (id: string) => {
+
+    const updatedNotification = await AdminNotificationModel.findByIdAndUpdate(id,{isSeen: true},{new:true});
+
+    if(!updatedNotification){
+        throw new ApiError(500,"Failed to update notification status");
+    }
+    return updatedNotification;
+    
+}
+
+
+const NotificationServices = { 
+    getAllNotificationService, 
     getAllAdminNotificationService ,
     deleteAdminNotification,
-    deleteNotification
+    deleteNotification,
+    makeNotificationSeen,
+    makeAdminNotificationSeen
 };
 export default NotificationServices;

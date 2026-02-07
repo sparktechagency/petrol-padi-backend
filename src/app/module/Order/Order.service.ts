@@ -1,5 +1,6 @@
 import { JwtPayload } from "jsonwebtoken";
 import ApiError from "../../../error/ApiError";
+import mongoose from "mongoose";
 import { IOrder } from "./Order.interface";
 import OrderModel from "./Order.model";
 import { ENUM_FUEL_TYPE, ENUM_ORDER_STATUS, ENUM_PAYMENT_STATUS } from "../../../utilities/enum";
@@ -7,7 +8,7 @@ import postNotification from "../../../utilities/postNotification";
 import SupplierModel from "../Supplier/Supplier.model";
 import { refundPayment } from "../../../helper/paystackHelper";
 import PaymentModel from "../Payment/Payment.model";
-import mongoose from "mongoose";
+import ReviewModel from "../Review/Review.model";
 
 //customer
 const createOrderService = async (userDetails: JwtPayload, payload: Partial<IOrder>) => {
@@ -16,15 +17,30 @@ const createOrderService = async (userDetails: JwtPayload, payload: Partial<IOrd
 
     //check supplier has stock or not
 
-    const order = await OrderModel.create({customer: profileId,...payload});
+    const newOrder = await OrderModel.create({customer: profileId,...payload});
 
-    if(!order){
-        throw new ApiError(500,"Failed to create new order");
+    if(!newOrder){
+        throw new ApiError(500,"Failed to create new order.");
     }
+
+    //order will be deleted/canceled
+    const order = await OrderModel.findById(newOrder?._id)
+        .populate({path: "supplier",select:"name"})
+        .populate({path: "customer",select:"name"});
 
     //admin will receive a notification
     //supplier will receive a notification
     //customer will receive a notification
+    await Promise.all([
+            //admin will receive a notification
+            postNotification({title: `Mr. ${order?.customer?.name}  created a ${order?.quantity}L ${order?.fuelType} delivery order from supplier ${order?.supplier?.name}, address: ${order?.location}.`}),
+            
+            //customer will receive a notification
+            postNotification({toId: order?.customer?._id, title: `You created a ${order?.quantity}L ${order?.fuelType} delivery order from ${order?.supplier?.name}. Now wait for supplier response.`}),
+            
+            //supplier will receive a notification
+            postNotification({toId: order?.supplier?._id, title: `You have a new ${order?.quantity}L ${order?.fuelType} delivery request  from Mr. ${order?.customer?.name}, address: ${order?.location}.`})
+        ]);
 
     return order;
     
@@ -42,9 +58,39 @@ const getAllOrderService = async (userDetails: JwtPayload,query: Record<string,u
 
 const singleOrderService = async (orderId: string) => {
 
-    const order = await OrderModel.findById(orderId).populate({path:"supplier", select:"name email phone image location"}).lean();
+    const order: IOrder | any = await OrderModel.findById(orderId).populate({path:"supplier", select:" name email phone image location totalRating averageRating"}).lean();
 
     //also need supplier avg rating and total rating
+    // const supplierIdFromRequest = order?.supplier;
+
+    // const supplierId = new mongoose.Types.ObjectId(order.supplier._id as string);
+    
+
+    // const result = await ReviewModel.aggregate([
+    //     {
+    //         $match: {
+    //             supplier: supplierId, // filter for one supplier
+    //         },
+    //     },
+    //     {
+    //         $group: {
+    //             _id: "$supplier",
+    //             totalReviews: { $sum: 1 },
+    //             averageRating: { $avg: "$rating" },
+    //         },
+    //     },
+    //     {
+    //         $project: {
+    //             _id: 0,
+    //             supplierId: "$_id",
+    //             totalReviews: 1,
+    //             averageRating: {
+    //                 $round: ["$averageRating", 1], // optional: round to 1 decimal
+    //             },
+    //         },
+    //     },
+    // ]);
+
     
     return order;
 
@@ -394,7 +440,7 @@ const acceptOrderService = async (orderId: string) => {
             postNotification({title: `${order?.supplier?.name}  accepted ${order?.quantity}L ${order?.fuelType} request from Mr. ${order?.customer?.name}, address: ${order?.location}.`}),
             
             //customer will receive a notification
-            postNotification({toId: order?.customer?._id, title: `Your ${order?.quantity}L ${order?.fuelType} request is accepted by ${order?.supplier?.name}. Now wait for delivery.`}),
+            postNotification({toId: order?.customer?._id, title: `Your ${order?.quantity}L ${order?.fuelType} delivery request is accepted by ${order?.supplier?.name}. Now wait for delivery.`}),
             
             //supplier will receive a notification
             postNotification({toId: order?.supplier?._id, title: `You accepted ${order?.quantity}L ${order?.fuelType} delivery request from Mr. ${order?.customer?.name}, address: ${order?.location}.`})
@@ -527,11 +573,41 @@ const deleteOrderService = async (orderId: string) => {
 //dashboard
 
 const dashboardAllOrderService = async (query: Record<string,unknown>) => {
-    const {orderStatus} = query;
+    let {orderStatus, searchOrderText, page} = query;
 
-    const orders = await OrderModel.find({orderStatus: orderStatus}).lean();
+    page = parseInt(page as any) || 1;
+    let limit = 10;
+    let skip = (page as number - 1) * limit;
 
-    return orders;
+    if(searchOrderText){
+        const orders = await OrderModel.find({
+            status: orderStatus,
+            // You can add more fields to search here
+            location: { $regex: searchOrderText as string, $options: "i" } ,
+        }).lean();
+
+        return {
+            meta:{page,limit: 10,total: orders.length, totalPage: 1},
+            orders
+        };
+    }
+
+    const [orders, totalOrders] = await Promise.all([
+
+        OrderModel.find({status: orderStatus})
+           .sort({createdAt: -1})
+               .skip(skip).limit(limit)
+                   .lean(),
+    
+        OrderModel.countDocuments({status: orderStatus})
+    ])
+
+    const totalPage = Math.ceil(totalOrders / limit);
+
+    return {
+        meta:{page,limit: 10,total: totalOrders, totalPage},
+        orders
+    };
 }
 
 const dashboardSingleOrderService = async (id: string) => {

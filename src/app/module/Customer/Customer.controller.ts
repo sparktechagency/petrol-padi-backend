@@ -23,13 +23,14 @@ const getprofileDetail = catchAsync(async (req, res) => {
 
 const dashboardAllCustomer = catchAsync(async (req, res) => {
     
-    const result = await CustomerServices.getAllCustomerService();
+    const result: any = await CustomerServices.getAllCustomerService(req.query);
 
     sendResponse(res, {
         statusCode: 200,
         success: true,
         message: "Retrieved all Customer",
-        data: result,
+        meta: result.meta,
+        data: result.allCustomer,
     });
 });
 

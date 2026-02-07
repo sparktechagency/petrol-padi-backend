@@ -2,6 +2,7 @@ import catchAsync from "../../../utilities/catchasync";
 import sendResponse from "../../../utilities/sendResponse";
 import { AuthRequest } from "../../../interface/authRequest";
 import UserServices from "./User.service";
+import { get } from "http";
 
 const addLocation = catchAsync(async (req, res) => {
 
@@ -44,6 +45,20 @@ const updateProfile = catchAsync(async (req, res) => {
     });
 });
 
+const getUserProfile = catchAsync(async (req, res) => {
+
+     const { user } = req as AuthRequest;
+
+    const result = await UserServices.getUserProfileService(user);
+    
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Retrieved profile successfully.",
+        data: result,
+    });
+});
+
 const changePassword = catchAsync(async (req, res) => {
 
      const { user } = req as AuthRequest;
@@ -62,6 +77,7 @@ const UserController = {
     addLocation,
     addBankDetail,
     updateProfile,
+    getUserProfile,
     changePassword
  };
 export default UserController;

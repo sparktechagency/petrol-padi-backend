@@ -6,9 +6,10 @@ export interface ISupplier {
   email :string;
   phone : string;
   image :string;
-  location: string;
-  latitude : string;
-  longitude :string;
+  location: Object;
+  address: string;
+  // latitude : string;
+  // longitude :string;
   document: string
 
   todayFuelRate : number;
@@ -29,6 +30,11 @@ export interface ISupplier {
   bankName: string;
   accountName: string;
   accountNumber: string;
+  bankCode: string;
+  bankVerificationStatus?: boolean;
+
+  totalRating: number;
+  averageRating: number;
 
   isApproved: boolean;
   

@@ -16,7 +16,7 @@ const createReview = catchAsync(async (req, res) => {
 
 const getAllReview = catchAsync(async (req, res) => {
 
-    const result = await ReviewServices.getAllReviewService(req.query);
+    const result = await ReviewServices.getAllReviewService(req.params.supplierId);
     
     sendResponse(res, {
         statusCode: 200,

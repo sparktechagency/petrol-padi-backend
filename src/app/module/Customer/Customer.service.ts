@@ -32,11 +32,40 @@ const getProfileDetailService = async (userDetails: JwtPayload) => {
 
 // dashboard
 
-const getAllCustomerService = async () => {
+const getAllCustomerService = async (query: Record<string,unknown>) => {
+    let {page, searchText} = query;
+    
+    if(searchText){
+        const searchedCustomer = await CustomerModel.find({
+            $or: [
+                { name: { $regex: searchText as string, $options: "i" } },
+                { email: { $regex: searchText as string, $options: "i" } },
+            ],
+        }).lean();
+        
+        return {
+            meta:{ page: 1,limit: 10,total: searchedCustomer.length, totalPage: 1 },
+            allCustomer: searchedCustomer
+        };
+    }
+    
+    //add pagination later  
+    page =  Number(page) || 1;
+    let limit = 10;
+    let skip = (page as number - 1) * limit;
 
-    const allCustomer = await CustomerModel.find({}).lean();
+    const [ allCustomer, totalCustomers ] = await Promise.all([
+        CustomerModel.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+        CustomerModel.countDocuments(),
+    ]);
 
-    return allCustomer;
+    const totalPage = Math.ceil(totalCustomers / limit);
+     
+
+    return {
+        meta:{ page,limit: 10,total: totalCustomers, totalPage },
+        allCustomer
+    };
     
 };
 

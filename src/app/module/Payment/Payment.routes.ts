@@ -1,5 +1,5 @@
 import express from "express";
-import { createPayment, verifyPaymentController, refundController } from "./Payment.controller";
+import { createPayment, verifyPaymentController, refundController, getBankList } from "./Payment.controller";
 import { verifyPaystackWebhook } from "../../middlewares/verifyPaystackWebhook";
 import { paystackWebhookHandler } from "./webhook.controller";
 import PaymentValidations from "./Payment.validation";
@@ -16,6 +16,10 @@ paymentRouter.post("/initialize-payment",
 paymentRouter.get("/verify-payment/:reference", verifyPaymentController);
 
 paymentRouter.post("/refund-payment", refundController);
+
+paymentRouter.get("/get-bank-list",
+        getBankList
+)
 
 
 //webhook

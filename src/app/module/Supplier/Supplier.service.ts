@@ -1,104 +1,290 @@
 import { JwtPayload } from "jsonwebtoken";
 import ApiError from "../../../error/ApiError";
-import { ENUM_FUEL_TYPE } from "../../../utilities/enum";
+import { ENUM_FUEL_TYPE, ENUM_ORDER_STATUS } from "../../../utilities/enum";
 import UserModel from "../User/User.model";
 import { addFuelRate, ISupplier } from "./Supplier.interface";
 import SupplierModel from "./Supplier.model";
 import deleteOldFile from "../../../utilities/deleteFile";
+import OrderModel from "../Order/Order.model";
+import mongoose from "mongoose";
 
-const findLowestHighestFuelRateService = async (locationQuery: Record<string,unknown>) => {
+// const findLowestHighestFuelRateService = async (locationQuery: Record<string,unknown>) => {
 
-    //if filter is needed by location then have to add filter by location
-    //location default value will be customer's own location/city
-    const { location } = locationQuery;
+//     //if filter is needed by location then have to add filter by location
+//     //location default value will be customer's own location/city
+//     const { location, latitude,longitude } = locationQuery;
 
-    //highest and lowest rate fuel
-    const result = await SupplierModel.aggregate([
-        {
-            $match: {
-                location: { $regex: location, $options: "i" } // case-insensitive match
-            }
-        },
-        {
-            $facet: {
-                lowestFuelRate: [
-                    { $sort: { todayFuelRate: 1 } },
-                    { $limit: 1 },
-                    {
-                        $project: {
-                            _id: 0,
-                            name: 1,
-                            todayFuelRate: 1
-                        }
-                    }
-                ],
-                highestFuelRate: [
-                    { $sort: { todayFuelRate: -1 } },
-                    { $limit: 1 },
-                    {
-                        $project: {
-                            _id: 0,
-                            name: 1,
-                            todayFuelRate: 1
-                        }
-                    }
-                ],
-                lowestDieselRate: [
-                    { $sort: { todayDieselRate: 1 } },
-                    { $limit: 1 },
-                    {
-                        $project: {
-                            _id: 0,
-                            name: 1,
-                            todayDieselRate: 1
-                        }
-                    }
-                ],
-                highestDieselRate: [
-                    { $sort: { todayDieselRate: -1 } },
-                    { $limit: 1 },
-                    {
-                        $project: {
-                            _id: 0,
-                            name: 1,
-                            todayDieselRate: 1
-                        }
-                    }
-                ],
-            }
-        }
-    ]);
+//     const queryparameters = {
+//         // creator: { $ne: new mongoose.Types.ObjectId(userId) },
+//         // status: ENUM_POST_STATUS.PENDING, // not my post
+//         location: {
+//             $nearSphere: {
+//             $geometry: {
+//                 type: "Point",
+//                 coordinates: [longitude, latitude],
+//             },
+//             $maxDistance: 50 * 1000,
+//             }
+//         }
+//     }
+//     //highest and lowest rate fuel
+//     const result = await SupplierModel.aggregate([
+//         {
+//             $match: {
+//                 location: { $regex: location, $options: "i" } // case-insensitive match
+//             }
+//         },
+//         {
+//             $facet: {
+//                 lowestFuelRate: [
+//                     { $sort: { todayFuelRate: 1 } },
+//                     { $limit: 1 },
+//                     {
+//                         $project: {
+//                             _id: 0,
+//                             name: 1,
+//                             todayFuelRate: 1
+//                         }
+//                     }
+//                 ],
+//                 highestFuelRate: [
+//                     { $sort: { todayFuelRate: -1 } },
+//                     { $limit: 1 },
+//                     {
+//                         $project: {
+//                             _id: 0,
+//                             name: 1,
+//                             todayFuelRate: 1
+//                         }
+//                     }
+//                 ],
+//                 lowestDieselRate: [
+//                     { $sort: { todayDieselRate: 1 } },
+//                     { $limit: 1 },
+//                     {
+//                         $project: {
+//                             _id: 0,
+//                             name: 1,
+//                             todayDieselRate: 1
+//                         }
+//                     }
+//                 ],
+//                 highestDieselRate: [
+//                     { $sort: { todayDieselRate: -1 } },
+//                     { $limit: 1 },
+//                     {
+//                         $project: {
+//                             _id: 0,
+//                             name: 1,
+//                             todayDieselRate: 1
+//                         }
+//                     }
+//                 ],
+//             }
+//         }
+//     ]);
 
-    //all supplier around customer filtered by city
-    const suppliers = await SupplierModel.aggregate([
-        {
-            $match: {
-                location: { $regex: location, $options: "i" }, // case-insensitive match
-                isApproved: true
-            }
-        },
-        {
-            $sort:{ todayFuelRate: 1 }
-        },
-        {
-            $project: {
-                _id: 1,
-                name: 1,
-                // email: 1,
-                // phone: 1,
-                // image: 1,
-                location: 1,
-                // latitude: 1,
-                // longitude: 1,
-                todayFuelRate: 1,
-                todayDieselRate: 1
-            }
-        }
-    ]);
+//     //all supplier around customer filtered by city
+//     const suppliers = await SupplierModel.aggregate([
+//         {
+//             $match: {
+//                 location: { $regex: location, $options: "i" }, // case-insensitive match
+//                 isApproved: true
+//             }
+//         },
+//         {
+//             $sort:{ todayFuelRate: 1 }
+//         },
+//         {
+//             $project: {
+//                 _id: 1,
+//                 name: 1,
+//                 // email: 1,
+//                 // phone: 1,
+//                 // image: 1,
+//                 location: 1,
+//                 // latitude: 1,
+//                 // longitude: 1,
+//                 todayFuelRate: 1,
+//                 todayDieselRate: 1
+//             }
+//         }
+//     ]);
 
-    return {result,suppliers}
+//     return {result,suppliers}
     
+// };
+
+
+
+const findLowestHighestFuelRateService = async ( locationQuery: Record<string, unknown> ) => {
+  const { location, latitude, longitude, radius = 50 } = locationQuery as {
+    location?: string;
+    latitude?: number;
+    longitude?: Number;
+    radius?: Number;
+  };
+
+  console.log(locationQuery);
+
+  const hasGeo = latitude && longitude;
+
+  /**
+   * -----------------------------
+   * BASE MATCH (text + approval)
+   * -----------------------------
+   */
+  const textMatch: any = {
+    isApproved: true
+  };
+
+  if (location) {
+    textMatch.location.address = { $regex: location, $options: "i" };
+  }
+
+//   const radiusKm = Number(radius);
+
+//     const safeRadius = Number.isFinite(radiusKm) && radiusKm > 0
+//     ? radiusKm * 1000
+//     : 50000; // default 50km
+
+
+  /**
+   * -----------------------------
+   * GEO STAGE (only if lat/lng)
+   * -----------------------------
+   */
+//   const geoStage = hasGeo
+//     ? 
+//         {
+//           $geoNear: {
+//             near: {
+//               type: "Point",
+//               coordinates: [longitude!, latitude!],
+//             },
+//             distanceField: "distance",
+//             maxDistance: radius * 1000, // km → meters
+//             spherical: true,
+//             query: textMatch,
+//           },
+//         },
+      
+//     : [{ $match: textMatch.location }];
+
+  /**
+   * -----------------------------
+   * HIGHEST / LOWEST RATES
+   * -----------------------------
+   */
+  const lng = Number(longitude);
+const lat = Number(latitude);
+
+if (isNaN(lng) || isNaN(lat)) {
+  throw new ApiError(400, "Invalid latitude or longitude");
+}
+
+// const radiusInMeters =
+//   typeof safeRadius === "number" && safeRadius > 0
+//     ? safeRadius
+//     : 50000;
+
+const result = await SupplierModel.aggregate([
+  {
+    $geoNear: {
+      near: {
+        type: "Point",
+        coordinates: [lng, lat], // ✅ MUST be numbers
+      },
+    //   near: [lng, lat],
+      distanceField: "distance",
+    //   maxDistance: radiusInMeters, // ✅ > 0 always
+      spherical: true,
+      query: textMatch, // ✅ extra filters live here
+    },
+  },
+  {
+  $match: {
+    distance: { $lte: radius as any * 1000 } // in meters
+  }
+},
+  {
+    $facet: {
+      lowestFuelRate: [
+        { $sort: { todayFuelRate: 1 } },
+        { $limit: 1 },
+        { $project: { _id: 0, name: 1, todayFuelRate: 1 } },
+      ],
+      highestFuelRate: [
+        { $sort: { todayFuelRate: -1 } },
+        { $limit: 1 },
+        { $project: { _id: 0, name: 1, todayFuelRate: 1 } },
+      ],
+      lowestDieselRate: [
+        { $sort: { todayDieselRate: 1 } },
+        { $limit: 1 },
+        { $project: { _id: 0, name: 1, todayDieselRate: 1 } },
+      ],
+      highestDieselRate: [
+        { $sort: { todayDieselRate: -1 } },
+        { $limit: 1 },
+        { $project: { _id: 0, name: 1, todayDieselRate: 1 } },
+      ],
+    },
+  },
+]);
+
+
+  /**
+   * -----------------------------
+   * SUPPLIERS LIST
+   * -----------------------------
+   */
+  const suppliers = await SupplierModel.aggregate([
+    // ...geoStage,
+     {
+    $geoNear: {
+      near: {
+        type: "Point",
+        coordinates: [lng, lat], // ✅ MUST be numbers
+      },
+    //   near: [lng, lat],
+      distanceField: "distance",
+    //   maxDistance: radiusInMeters, // ✅ > 0 always
+      spherical: true,
+      query: textMatch, // ✅ extra filters live here
+    },
+  },
+  {
+  $match: {
+    distance: { $lte: radius as any * 1000 } // in meters
+  }
+},
+    { $sort: { todayFuelRate: 1 } },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        location: 1,
+        todayFuelRate: 1,
+        todayDieselRate: 1,
+        distance: hasGeo ? 1 : 0,
+      },
+    },
+  ]);
+
+  return { result, suppliers };
 };
+
+
+const searchSupplierByNameService = async (nameQuery: Record<string,unknown>) => {
+
+    const suppliers = await SupplierModel.find({
+        name: { $regex: nameQuery, $options: "i" }, // case-insensitive match
+        isApproved: true
+    }).select("name location todayFuelRate todayDieselRate");
+
+    return suppliers;
+}
 
 const supplierDetailService = async (userDetails: JwtPayload) => {
 
@@ -155,9 +341,79 @@ const addFuelRateService = async (userDetails: JwtPayload,payload: addFuelRate) 
 const getFuelRateService = async (userDetails: JwtPayload) => {
     const {profileId} = userDetails;
 
-    const supplier = await SupplierModel.findById(profileId).select("name email todayFuelRate todayDieselRate");
+    //get today total fuel, disel order, deliverys and earnings for supplier
 
-    return supplier;
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+
+    const supplierId = new mongoose.Types.ObjectId(profileId);
+
+    const pipeline = [
+        {
+            $match: {
+                supplier: supplierId,
+                createdAt: {
+                    $gte: startOfDay,
+                    $lte: endOfDay,
+                },
+            },
+        },
+
+        // Group by fuel type
+        {
+            $group: {
+                _id: "$fuelType",
+
+                // total orders (pending + completed + on the way)
+                totalOrders: { $sum: 1 },
+
+                // completed orders count
+                completedOrders: {
+                    $sum: {
+                        $cond: [
+                            { $eq: ["$status", ENUM_ORDER_STATUS.COMPLETED] },
+                            1,
+                            0,
+                        ],
+                    },
+                },
+
+                // total delivered price (completed only)
+                deliveredAmount: {
+                    $sum: {
+                        $cond: [
+                            { $eq: ["$status", ENUM_ORDER_STATUS.COMPLETED] },
+                            "$totalPrice",
+                            0,
+                        ],
+                    },
+                },
+            },
+        },
+
+        // Shape output nicely
+        {
+            $project: {
+                _id: 0,
+                fuelType: "$_id",
+                totalOrders: 1,
+                completedOrders: 1,
+                deliveredAmount: 1,
+            },
+        },
+    ];
+
+    const [supplierTodayStats, supplier] = await Promise.all([
+            OrderModel.aggregate(pipeline),
+            SupplierModel.findById(profileId).select("name email todayFuelRate todayDieselRate").lean()
+    ]);
+    // await SupplierModel.findById(profileId).select("name email todayFuelRate todayDieselRate");
+
+
+
+    return {supplierTodayStats,supplier};
 
 }
 
@@ -168,7 +424,7 @@ const uploadDocumentService = async (userDetails: JwtPayload, file: Express.Mult
 
     // Handle image update
   if (file) {
-    if (supplier.document) deleteOldFile(supplier.image as string);
+    if (supplier.document) deleteOldFile(supplier.document as string);
     supplier.document = `uploads/supplier-file/${file.filename}`;
   }
 
@@ -178,20 +434,216 @@ const uploadDocumentService = async (userDetails: JwtPayload, file: Express.Mult
 
 }
 
-//dashboard
+const supplierRevenueService = async (userDetails: JwtPayload, query: Record<string,unknown>) => {
+    const {profileId} = userDetails;
+    let {time} = query;
 
-const getSupplierRequestService = async () => {
+    const today = new Date();
+    const last7Days = new Date();
+    last7Days.setDate(today.getDate() - 6);
 
-    const allRequest = await SupplierModel.find({isApproved: false}).select("user name email phone image location document createdAt").lean();
+    const supplier = new mongoose.Types.ObjectId(profileId);
 
-    return allRequest;
+    const baseMatch = {
+        supplier,
+        status: ENUM_ORDER_STATUS.COMPLETED,
+    };
+
+
+
+    if(time == "this-week"){
+        const weeklyData = await OrderModel.aggregate([
+            {
+                $match: {
+                ...baseMatch,
+                createdAt: {
+                    $gte: last7Days,
+                    $lte: today,
+                },
+                },
+            },
+            {
+                $group: {
+                _id: {
+                    day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                },
+                totalRevenue: { $sum: "$totalPrice" },
+                },
+            },
+            {
+                $project: {
+                _id: 0,
+                day: "$_id.day",
+                totalRevenue: 1,
+                },
+            },
+            {
+                $sort: { day: 1 },
+            },
+        ]);
+
+        return weeklyData;
+
+    }
+    else if(time == "this-month"){
+        const last30Days = new Date();
+        last30Days.setDate(today.getDate() - 29);
+
+        const monthlyData = await OrderModel.aggregate([
+            {
+                $match: {
+                ...baseMatch,
+                createdAt: {
+                    $gte: last30Days,
+                    $lte: today,
+                },
+                },
+            },
+            {
+                $group: {
+                _id: {
+                    day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                },
+                totalRevenue: { $sum: "$totalPrice" },
+                },
+            },
+            {
+                $project: {
+                _id: 0,
+                day: "$_id.day",
+                totalRevenue: 1,
+                },
+            },
+            {
+                $sort: { day: 1 },
+            },
+        ]);
+
+        return monthlyData;
+
+    }
+    if(time == "this-year"){
+        const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+
+        const yearlyData = await OrderModel.aggregate([
+            {
+                $match: {
+                ...baseMatch,
+                createdAt: {
+                    $gte: startOfYear,
+                    $lte: today,
+                },
+                },
+            },
+            {
+                $group: {
+                _id: { $month: "$createdAt" },
+                totalRevenue: { $sum: "$totalPrice" },
+                },
+            },
+            {
+                $project: {
+                _id: 0,
+                month: "$_id",
+                totalRevenue: 1,
+                },
+            },
+            {
+                $sort: { month: 1 },
+            },
+        ]);
+
+        return yearlyData;
+    }
 }
 
-const getAllSupplierService = async () => {
+//dashboard
 
-    const allRequest = await SupplierModel.find({isApproved: true}).select("user name email phone image location createdAt").lean();
+const getSupplierRequestService = async (query: Record<string,unknown>) => {
+    let {page, searchText} = query;
+    
+    if(searchText){
+        const searchedSupplier = await SupplierModel.find({
+            $or: [
+                { name: { $regex: searchText as string, $options: "i" } },
+                { email: { $regex: searchText as string, $options: "i" } },
+            ],
+            isApproved: false
+        }).select("user name email phone image location document createdAt").lean();
+        
+        return {
+            meta:{ page, limit: 10, total: searchedSupplier.length, totalPage: 1 },
+            allSupplier: searchedSupplier
+        };
+    }
+    
+    //add pagination later  
+    page =  Number(page) || 1;
+    let limit = 10;
+    let skip = (page as number - 1) * limit;
 
-    return allRequest;
+    const [ allSupplier, totalSuppliers ] = await Promise.all([
+        SupplierModel.find({isApproved: false}).select("user name email phone image location document createdAt")
+            .sort({ createdAt: -1 })
+                .skip(skip).limit(limit).lean(),
+        SupplierModel.countDocuments({isApproved: false}),
+    ]);
+
+    const totalPage = Math.ceil(totalSuppliers / limit);
+     
+
+    return {
+        meta:{ page,limit: 10,total: totalSuppliers, totalPage },
+        allSupplier
+    };
+
+    // const allRequest = await SupplierModel.find({isApproved: false}).select("user name email phone image location document createdAt").lean();
+
+    // return allRequest;
+}
+
+const getAllSupplierService = async (query: Record<string,unknown>) => {
+
+    let {page, searchText} = query;
+    
+    if(searchText){
+        const searchedSupplier = await SupplierModel.find({
+            $or: [
+                { name: { $regex: searchText as string, $options: "i" } },
+                { email: { $regex: searchText as string, $options: "i" } },
+            ],
+            isApproved: true
+        }).select("user name email phone image location document createdAt").lean();
+        
+       return {
+            meta:{ page: Number(page) || 1,limit: 10,total: searchedSupplier.length, totalPage: 1 },
+            allSupplier: searchedSupplier
+        };
+    }
+    
+    //add pagination later  
+    page =  Number(page) || 1;
+    let limit = 10;
+    let skip = (page as number - 1) * limit;
+
+    const [ allSupplier, totalSuppliers ] = await Promise.all([
+        SupplierModel.find({isApproved: true}).select("user name email phone image location document createdAt")
+            .sort({ createdAt: -1 })
+                .skip(skip).limit(limit).lean(),
+        SupplierModel.countDocuments({isApproved: true}),
+    ]);
+
+    const totalPage = Math.ceil(totalSuppliers / limit);
+     
+
+    return {
+        meta:{ page,limit: 10,total: totalSuppliers, totalPage },
+        allSupplier
+    };
+
+    // const allRequest = await SupplierModel.find({isApproved: true}).select("user name email phone image location createdAt").lean();
+
+    // return allRequest;
 }
 
 const getSupplierDetailsService = async (id: string) => {
@@ -213,7 +665,7 @@ const approveSupplierService = async (id: string) =>{
         throw new ApiError(500,"Failed to approve this supplier");
     }
 
-    return null;
+    return {name: approvedSupplier.name, email: approvedSupplier.email, phone: approvedSupplier.phone, iaApproved: approvedSupplier.isApproved};
 }
 
 const deleteSupplierService = async (id: string) =>{
@@ -238,10 +690,12 @@ const deleteSupplierService = async (id: string) =>{
 
 const SupplierServices = { 
     findLowestHighestFuelRateService,
+    searchSupplierByNameService,
     supplierDetailService,
     addFuelRateService,
     getFuelRateService,
     uploadDocumentService,
+    supplierRevenueService,
     getAllSupplierService,
     getSupplierRequestService,
     getSupplierDetailsService,

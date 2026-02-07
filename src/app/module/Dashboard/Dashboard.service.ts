@@ -12,6 +12,7 @@ import OrderModel from "../Order/Order.model";
 import generateVerifyCode from "../../../utilities/codeGenerator";
 import { sendVerificationEmail } from "../../../helper/emailHelper";
 import deleteOldFile from "../../../utilities/deleteFile";
+import { get } from "http";
 
 
 
@@ -42,7 +43,7 @@ const loginAdminService = async (payload: TLoginUser) => {
     const {email,password} = payload;
 
     // Service logic goes here
-    const admin = await AdminModel.findOne({ email: email });
+    const admin = await AdminModel.findOne({ email: email.toLowerCase() });
 
     if (!admin) {
         throw new ApiError(404, 'This admin does not exist');
@@ -68,7 +69,7 @@ const loginAdminService = async (payload: TLoginUser) => {
     // }
 
     if(password !== admin.password){
-        throw new ApiError(403,'Password do not match');
+        throw new ApiError(403,'Password do not match.');
     }
 
 
@@ -100,7 +101,7 @@ const loginAdminService = async (payload: TLoginUser) => {
 const adminVerifyCode = async (payload:{email: string, verifyCode: string}) => {
     const { email, verifyCode } = payload;
 
-    const admin = await AdminModel.findOne({ email: email }).select("profile email role verificationCode isEmailVerified");
+    const admin = await AdminModel.findOne({ email: email.toLowerCase() }).select("profile email role verificationCode isEmailVerified");
 
     if (!admin) {
         throw new ApiError(404, 'Admin not found to verify otp');
@@ -133,36 +134,37 @@ const adminVerifyCode = async (payload:{email: string, verifyCode: string}) => {
     //     );
     // }
 
-    // Create JWT tokens
-    // const tokenPayload = {
-    //     userId: user?._id,
-    //     profileId: user?.profile,
-    //     email: user?.email,
-    //     role: user?.role,
-    // };
+    //generate token
+    const tokenPayload = {
+        userId: admin?._id as string,
+        role: admin?.role,
+        email: admin?.email
+    };
 
-    // const accessToken: string =  createToken(
-    //         tokenPayload,
-    //         config.jwt.secret as Secret,
-    //         config.jwt.expires_in as SignOptions["expiresIn"]
-    //     );
+    const accessToken: string =  createToken(
+        tokenPayload,
+        config.jwt.secret as Secret,
+        config.jwt.expires_in as SignOptions["expiresIn"]
+    );
 
-    // const refreshToken = createToken(
-    //     jwtPayload,
-    //     config.jwt_refresh_secret as string,
-    //     config.jwt_refresh_expires_in as string
-    // );
+    const newUser : object = {
+        name: admin?.name,
+        email: admin?.email,
+        // phone: admin?.phone,
+        role: admin.role,
+        
+    }
 
-    return  null;
+    return { newUser,accessToken};
 };
 
 const adminSendVerifyCodeService = async (payload:{email: string}) => {
     const { email } = payload;
 
-    const admin = await AdminModel.findOne({ email: email });
+    const admin = await AdminModel.findOne({ email: email.toLowerCase() });
 
     if (!admin) {
-        throw new ApiError(404, 'Admin not found to send otp');
+        throw new ApiError(404, 'Admin not found to send otp.');
     }
 
     const {code, expiredAt} = generateVerifyCode(10);
@@ -177,7 +179,56 @@ const adminSendVerifyCodeService = async (payload:{email: string}) => {
         code: code
     });
 
-    return null;
+    return code;
+}
+
+const getAllAdminService = async (query: Record<string,unknown>) => {
+    let {page, searchText} = query;
+    
+    if(searchText){
+        const searchedAdmin = await AdminModel.find({
+           
+             name: { $regex: searchText as string, $options: "i" } ,
+             role: "Admin"
+        }).lean();
+        
+        return searchedAdmin;
+    }
+    
+    //add pagination later  
+    page =  Number(page) || 1;
+    let limit = 10;
+    let skip = (page as number - 1) * limit;
+
+    const [ allAdmin, totalAdmin ] = await Promise.all([
+        AdminModel.find({role: "Admin"})
+            .sort({ createdAt: -1 })
+                .skip(skip).limit(limit).lean(),
+        AdminModel.countDocuments({role: "Admin"}),
+    ]);
+
+    const totalPages = Math.ceil(totalAdmin / limit);
+     
+
+    return {
+        meta:{ page,limit: 10,totalAdmin, totalPages },
+        allAdmin
+    };
+
+    // const allAdmin = await AdminModel.find({}).select("name email phone image role isBlockd createdAt").lean();     
+    // return allAdmin;
+}
+
+const getAdminDetailsService = async (userDetails: JwtPayload) => {
+
+    const {userId} = userDetails;   
+
+    const admin = await AdminModel.findById(userId).select("name email phone image role createdAt").lean();  
+
+    if(!admin){
+        throw new ApiError(500,"Failed to get admin details.");
+    }   
+    return admin;
 }
 
 
@@ -185,7 +236,7 @@ const adminResetPasswordService = async (userDetails: JwtPayload,payload: {newPa
     const { newPassword } = payload;
     const {email} = userDetails;
 
-    const admin = await AdminModel.findOne({ email: email });
+    const admin = await AdminModel.findOne({ email: email.toLowerCase() });
 
     if (!admin) {
         throw new ApiError(404, 'This admin does not exist to reset password');
@@ -243,10 +294,17 @@ const editProfileService = async (userDetails: JwtPayload,file: Express.Multer.F
     }
 
     if(payload.name) admin.name = payload.name;
+    if(payload.phone) admin.phone = payload.phone;
 
     await admin.save();
     
-    return null;
+    return {
+        name: admin.name,
+        email: admin.email,
+        phone: admin.phone,
+        image: admin.image,
+        // role: admin.role
+    };
     
 }
 
@@ -433,6 +491,8 @@ const DashboardService = {
     loginAdminService,
     adminVerifyCode,
     adminSendVerifyCodeService,
+    getAllAdminService,
+    getAdminDetailsService,
     adminResetPasswordService,
     editProfileService,
     changeAdminPasswordService,

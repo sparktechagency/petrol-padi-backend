@@ -6,7 +6,9 @@ export interface ICustomer {
   email : string;
   phone : string;
   image : string;
-  location : string;
+  location : Object;
+  latitude : string;
+  longitude : string;
   bankName :string;
   accountName :string;
   accountNumber: string;

@@ -1,5 +1,6 @@
 
 import ApiError from "../../../error/ApiError";
+import SupplierModel from "../Supplier/Supplier.model";
 import { IReview } from "./Review.interface";
 import ReviewModel from "./Review.model";
 import mongoose from "mongoose";
@@ -12,13 +13,40 @@ const createReviewService = async ( payload: IReview) => {
         throw new ApiError(500,"Failed to create new review.");
     }
 
+    //add totalReview and average rating to supplier model
+    const supplierId = new mongoose.Types.ObjectId(payload.supplier);
+
+    const pipeline = [
+        {
+            $match: {
+                supplier: supplierId
+            }
+        },
+        {
+            $group: {
+                _id: "$supplier",
+                totalReviews: { $sum: 1 },
+                averageRating: { $avg: "$rating" }
+            }
+        }
+    ];
+
+    const [aggregationResult] = await ReviewModel.aggregate(pipeline);
+    console.log(aggregationResult);
+    if (aggregationResult) {
+        const { totalReviews, averageRating } = aggregationResult;
+
+        await SupplierModel.findByIdAndUpdate(supplierId, {
+            totalRating: totalReviews,
+            averageRating: parseFloat(averageRating.toFixed(2))
+        });
+    }
+
     return review;
 };
 
 
-const getAllReviewService = async (query: Record<string,unknown>) => {
-
-    const supplierId = query.supplierId as string;
+const getAllReviewService = async (supplierId: string) => {
 
     const supplier = new mongoose.Types.ObjectId(supplierId);
 

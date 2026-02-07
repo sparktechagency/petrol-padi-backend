@@ -25,7 +25,7 @@ inventoryRouter.get("/filter-inventory",
 );
 
 //customer total spent
-inventoryRouter.get("/customer-total-spent",
+inventoryRouter.get("/customer-spent-stat",
         authorizeUser,
         // validateRequest(InventoryValidations.customerTotalSpentValidation),
         InventoryController.customerTotalSpent

@@ -52,10 +52,35 @@ const deleteAdminNotification = catchAsync(async (req, res) => {
     });
 });
 
+const makeNotificationSeen = catchAsync(async (req, res) => {
+
+     const result = await NotificationServices.makeNotificationSeen(req.params.id);
+    
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Notification marked as seen.",
+        data: result,
+    });
+});
+const makeAdminNotificationSeen = catchAsync(async (req, res) => {
+
+     const result = await NotificationServices.makeAdminNotificationSeen(req.params.id);
+    
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Admin Notification marked as seen.",
+        data: result,
+    });
+});
+
 const NotificationController = { 
     getAllNotification,
     deleteNotification,
     getAllAdminNotification,
-    deleteAdminNotification
+    deleteAdminNotification,
+    makeNotificationSeen,
+    makeAdminNotificationSeen
  };
 export default NotificationController;

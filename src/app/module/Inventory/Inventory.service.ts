@@ -155,6 +155,7 @@ const filterInventoryService = async (userDetails: IJwtPayload,query: Record<str
 
   // CASE 1: WEEK OR MONTH → return daily data
   if (time === "this-week" || time === "this-month") {
+    
     const dailyStats = await InventoryModel.aggregate([
       { $match: matchStage },
       {

@@ -1,3 +1,4 @@
+import { get } from "http";
 import { AuthRequest } from "../../../interface/authRequest";
 import catchAsync from "../../../utilities/catchasync";
 import sendResponse from "../../../utilities/sendResponse";
@@ -139,6 +140,37 @@ const blockAdmin = catchAsync(
     }
 );
 
+const getAllAdmin = catchAsync(
+    async (req,res) => {
+
+        const result: any = await DashboardService.getAllAdminService(req.query);
+
+        sendResponse(res,{
+            statusCode: 200,
+            success: true,
+            message: "Retrieved all admin.",
+            meta: result.meta,
+            data: result.allAdmin
+        });
+    }
+);
+
+const getAdminDetail = catchAsync(
+    async (req,res) => {
+
+        const { user } = req as AuthRequest;
+
+        const result: any = await DashboardService.getAdminDetailsService(user);
+
+        sendResponse(res,{
+            statusCode: 200,
+            success: true,
+            message: "Retrieved admin details.",
+            data: result
+        });
+    }
+);
+
 
 const DashboardController = {
     adminRegister,
@@ -150,7 +182,9 @@ const DashboardController = {
     changeAdminPassword,
     deleteAdminAccount,
     dashboardStat,
-    blockAdmin
+    blockAdmin,
+    getAllAdmin,
+    getAdminDetail
 }
 
 export default DashboardController;

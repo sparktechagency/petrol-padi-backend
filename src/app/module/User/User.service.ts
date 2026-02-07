@@ -9,6 +9,8 @@ import { ICustomer } from "../Customer/Customer.interface";
 import { ISupplier } from "../Supplier/Supplier.interface";
 import { JwtPayload } from "jsonwebtoken";
 import deleteOldFile from "../../../utilities/deleteFile";
+import { resolveBankAccount } from "../../../helper/paystackHelper";
+
 
 
 
@@ -42,7 +44,7 @@ const updateUserProfile = async (
   }
 
   // Update fields
-  const { name, phone, location, bankName, accountName, accountNumber } = payload;
+  const { name, phone, location, bankName, accountName, accountNumber, bankCode } = payload;
 
   if (name) {
     profile.name = name;
@@ -54,10 +56,22 @@ const updateUserProfile = async (
     user.phone = phone;
   }
 
-  // if (bankName) profile.bankName = bankName;
-  // if (accountName) profile.accountName = accountName;
-  // if (accountNumber) profile.accountNumber = accountNumber;
-  // if (location) profile.location = location;
+  //verfify bank details if any of the bank details is provided
+  if(bankName || accountName || accountNumber || bankCode){
+    if(!bankName || !accountName || !accountNumber || !bankCode){
+        throw new ApiError(400,'Please provide complete bank details to update bank information.');
+    }
+    // const isValidAccount = await resolveBankAccount(accountNumber, bankCode);
+    // if(!isValidAccount.data.status){
+    //     throw new ApiError(400,'Invalid bank account details. Please provide valid account number and bank code.');
+    // }
+  }
+
+  if (bankName) profile.bankName = bankName;
+  if (accountName) profile.accountName = accountName;
+  if (accountNumber) profile.accountNumber = accountNumber;
+  if (bankCode) profile.bankCode = bankCode;
+  if (location) profile.location = location;
 
   // Handle image update
   if (file) {
@@ -66,43 +80,93 @@ const updateUserProfile = async (
   }
 
   // Save both
-  await Promise.all([profile.save(), user.save()]);
+  // await Promise.all([profile.save(), user.save()]);
+  await profile.save();
+  if(name || phone){
+    await user.save();
+  }
 
   // Return a unified response
   return {
       name: profile.name,
       email: user.email,
       location: profile.location,
+      image: profile.image,
+      phone: profile.phone,
+      bankName: profile.bankName,
+      accountName: profile.accountName,
+      accountNumber: profile.accountNumber,
   };
 };
 
-
-const addLocationService = async (userDetails: JwtPayload,payload: IAddLocation) => {
-    // Service logic goes here
+const getUserProfileService = async (userDetails: JwtPayload) => {
     const {profileId,role} = userDetails;
-   const {location} = payload;
 
-    let profile : ICustomer| ISupplier | null = null;
+    let profile;
 
     switch (role) {
 
         case ENUM_USER_ROLE.CUSTOMER:
-             profile = await CustomerModel.findByIdAndUpdate(profileId, {location: location}, {new: true});
+             profile = await CustomerModel.findById(profileId).select("name email phone image location").lean();
             break;
 
         case ENUM_USER_ROLE.SUPPLIER:
-            profile = await SupplierModel.findByIdAndUpdate(profileId, {location: location}, {new: true});
+            profile = await SupplierModel.findById(profileId).select("name email phone image location ").lean();
             break;
              
         default:{
             // const _exhaustiveCheck: never = role;
-            throw new ApiError(400, "Invalid user role");
+            throw new ApiError(400, "Invalid user role.");
         }
 
     }
 
     if(!profile){
-        throw new ApiError(500,'Failed to add location in the profile');
+        throw new ApiError(404,'Profile not found.');
+    }  
+
+    return profile;
+}
+
+
+const addLocationService = async (userDetails: JwtPayload,payload: IAddLocation) => {
+    // Service logic goes here
+    const {profileId,role} = userDetails;
+  //  const {location,latitude,longitude} = payload;
+  //  console.log(payload);
+    let profile : ICustomer| ISupplier | null = null;
+
+    switch (role) {
+
+        case ENUM_USER_ROLE.CUSTOMER:
+             profile = await CustomerModel.findByIdAndUpdate(profileId, {
+                location: {
+                    type: "Point",
+                    coordinates: [Number(payload.longitude), Number(payload.latitude)],
+                },
+                address: payload.location
+                }, {new: true});
+            break;
+
+        case ENUM_USER_ROLE.SUPPLIER:
+            profile = await SupplierModel.findByIdAndUpdate(profileId, {
+                location: {
+                    type: "Point",
+                    coordinates: [Number(payload.longitude), Number(payload.latitude)],
+                },
+                address: payload.location
+                }, {new: true});
+            break;
+             
+        default:{
+            // const _exhaustiveCheck: never = role;
+            throw new ApiError(400, "Invalid user role.");
+        }
+
+    }
+
+    if(!profile){
+        throw new ApiError(500,'Failed to add location in the profile.');
     }  
 
     return { name:profile.name,email:profile.email, location: profile.location };
@@ -116,16 +180,22 @@ const addBankDetailService = async (userDetails: JwtPayload,payload: IBankDetail
 
     let profile : ICustomer| ISupplier | null = null;
 
+    //check bank account is valid or not
+    // const isValidAccount = await resolveBankAccount(payload.accountNumber, payload.bankCode);
+    // if(!isValidAccount.data.status){
+    //     throw new ApiError(400,'Invalid bank account details.Please provide valid account number and bank code.');
+    // }
+
     switch (role) {
         case ENUM_USER_ROLE.CUSTOMER:
              profile = await CustomerModel.findByIdAndUpdate(profileId,{
-              $set: payload
+              $set: {...payload, bankVerificationStatus: true}
              } , {new: true});
             break;
 
         case ENUM_USER_ROLE.SUPPLIER:
             profile = await SupplierModel.findByIdAndUpdate(profileId, {
-              $set: payload
+              $set: { ...payload, bankVerificationStatus: true}
             }, {new: true});
             break;
              
@@ -140,7 +210,14 @@ const addBankDetailService = async (userDetails: JwtPayload,payload: IBankDetail
         throw new ApiError(500,'Failed to add location in the profile');
     }  
 
-    return { name:profile.name,email:profile.email, location: profile.location };
+    return { 
+        name:profile.name,
+        email:profile.email, 
+        bankName:profile.bankName, 
+        accountName:profile.accountName,
+        accountNumber:profile.accountNumber, 
+        // bankCode: profile.bankCode
+     };
 }
 
 const changePasswordService = async (userDetails: JwtPayload, payload: IChangePassword) => {
@@ -169,6 +246,7 @@ const changePasswordService = async (userDetails: JwtPayload, payload: IChangePa
 
 const UserServices = {
     updateUserProfile, 
+    getUserProfileService,
     addLocationService,
     addBankDetailService,
     changePasswordService 

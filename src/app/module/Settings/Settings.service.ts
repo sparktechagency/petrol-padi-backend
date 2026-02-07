@@ -14,11 +14,64 @@ const submitHelpAndSupportService = async (payload: IHelpAndSupport) => {
     return result;
 };
 
-const getHelpAndSupportService = async () => {
+const getHelpAndSupportService = async (searchQuery: Record<string,unknown>) => {
 
-    const result = await SettingsModel.HelpAndSupportModel.find({}).lean();
+    // let {searchText, page} = searchQuery;
 
-    return result;
+    // if(searchText){
+    //     const result = await SettingsModel.HelpAndSupportModel.find({
+    //         $or: [
+    //             { name: { $regex: searchText, $options: "i" } },
+    //             { email: { $regex: searchText, $options: "i" } },
+    //         ],
+    //     }).lean();
+
+    //     return result;
+    // }
+
+    //  page = page ? Number(page) : 1;
+
+    //! pagination can be added later if needed
+
+    // const result = await SettingsModel.HelpAndSupportModel.find({}).lean();
+
+    // return result;
+    let {page, searchText} = searchQuery;
+    
+    if(searchText){
+        const searchedSupplier = await SettingsModel.HelpAndSupportModel.find({
+            $or: [
+                { name: { $regex: searchText as string, $options: "i" } },
+                { email: { $regex: searchText as string, $options: "i" } },
+            ],
+
+        }).lean();
+        
+       return {
+            meta:{ page: Number(page) || 1,limit: 10,total: searchedSupplier.length, totalPage: 1 },
+            allSupport: searchedSupplier
+        };
+    }
+    
+    //add pagination later  
+    page =  Number(page) || 1;
+    let limit = 10;
+    let skip = (page as number - 1) * limit;
+
+    const [ allSupport, totalSupport ] = await Promise.all([
+        SettingsModel.HelpAndSupportModel.find({})
+            .sort({ createdAt: -1 })
+                .skip(skip).limit(limit).lean(),
+        SettingsModel.HelpAndSupportModel.countDocuments({}),
+    ]);
+
+    const totalPage = Math.ceil(totalSupport / limit);
+     
+
+    return {
+        meta:{ page,limit: 10,total: totalSupport, totalPage },
+        allSupport
+    };
 };
 
 const deleteHelpAndSupportService = async (id: string) => {

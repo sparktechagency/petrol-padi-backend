@@ -21,14 +21,19 @@ userRouter.patch("/update-profile",
     UserController.updateProfile
 );
 
+userRouter.get("/get-profile-detail",
+    authorizeUser,
+    UserController.getUserProfile
+);
+
 userRouter.patch("/change-password",
-    auth(["Supplier","Customer"]),
+    authorizeUser,
     validateRequest(UserValidations.changePasswordValidation),
     UserController.changePassword
 );
 
 userRouter.post("/add-bank-details",
-    auth(["Supplier","Customer"]),
+    authorizeUser,
     validateRequest(UserValidations.addBankDetailValidation),
     UserController.addBankDetail
 );

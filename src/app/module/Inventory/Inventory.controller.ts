@@ -27,7 +27,7 @@ const getLoadedFuel = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: "Profile updated successfully",
+        message: "Retrieved invenory details successfully.",
         data: result,
     });
 });

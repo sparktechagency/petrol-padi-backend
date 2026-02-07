@@ -7,9 +7,27 @@ const SupplierSchema = new Schema<ISupplier>({
     email: { type: String, required: true, unique: true },
     phone: { type: String, default: "" },
     image: { type: String , default: "" },
-    location: { type: String ,  default: "" },
-    latitude: { type: String,  default: "" },
-    longitude: { type: String , default: "" },
+    // location: { type: String ,  default: "" },
+    // latitude: { type: String,  default: "" },
+    // longitude: { type: String , default: "" },
+     location: {
+        type: {
+            type: String,
+            enum: ["Point"],
+            default: "Point"
+        },
+        coordinates: {
+            type: [Number], // [longitude, latitude]
+            // required: true
+            default: [0, 0]
+        }
+        
+    },
+    address: {
+        type: String,
+        // required: true
+        default: ""
+    },
     document: { type: String , default: "" },
 
     todayFuelRate: { type: Number, default: 0 },
@@ -30,9 +48,21 @@ const SupplierSchema = new Schema<ISupplier>({
     bankName: { type: String, default: "" },
     accountName: { type: String, default: "" },
     accountNumber: { type: String, default: "" },
+    bankCode: { type: String, default: "" },
+    bankVerificationStatus: { type: Boolean, default: false },
+
+    totalRating: { type: Number, default: 0 },
+    averageRating: { type: Number, default: 0 },
 
     isApproved: {type: Boolean, default: false}
 }, { timestamps: true });
+
+
+SupplierSchema.index({ location: "2dsphere" });
+SupplierSchema.index({ isApproved: 1 });
+SupplierSchema.index({ todayFuelRate: 1 });
+SupplierSchema.index({ todayDieselRate: 1 });
+
 
 const SupplierModel = models.Supplier || model<ISupplier>("Supplier", SupplierSchema);
 

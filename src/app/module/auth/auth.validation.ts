@@ -32,7 +32,7 @@ const registerUserValidationSchema = z.object({
   .refine(
     (data) => data.password === data.confirmPassword,
     {
-      message: "Password and confirm password must match",
+      message: "Password and confirm password must match.",
       path: ["confirmPassword"],
     }
   ),

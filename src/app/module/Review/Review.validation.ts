@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const createReviewValidation = z.object({
     body: z.object({
-        supplier: z.string().min(1,"Supplier id is required"),
+        supplier: z.string().min(24,"Proper supplier id is required"),
         reviewerName: z.string().min(1,"Reviewer name is required"),
         rating: z.number().positive(),
         description: z.string().min(1,"Review description is required")

@@ -84,7 +84,7 @@ orderRouter.delete("/delete-order/:orderId",
 //dashboard
 
 orderRouter.get("/dashboard-all-order",
-        //authorization,
+        authorizeUser,
         validateRequest(OrderValidations.getDashboardOrderValidation),
         OrderController.dashboardAllOrder
 );

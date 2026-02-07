@@ -12,6 +12,12 @@ notificationRouter.get("/get-all-notification",
     authorizeUser,
     NotificationController.getAllNotification
 );
+
+notificationRouter.patch("/make-notification-seen/:id",
+    // authorizeUser,
+    NotificationController.makeNotificationSeen
+);
+
 notificationRouter.delete("/delete-notification/:id",
 
     NotificationController.deleteNotification
@@ -27,6 +33,11 @@ notificationRouter.get("/get-admin-notification",
 notificationRouter.get("/delete-admin-notification/:id",
     // authorizeUser,
     NotificationController.deleteAdminNotification
+);
+
+notificationRouter.patch("/make-admin-notification-seen/:id",
+    // authorizeUser,
+    NotificationController.makeAdminNotificationSeen
 );
 
 

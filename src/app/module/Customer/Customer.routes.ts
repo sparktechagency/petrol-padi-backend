@@ -14,7 +14,7 @@ customerRouter.get("/get-profile-detail",
 
 //dashboard
 customerRouter.get("/dashboard-all-customer",
-
+    authorizeUser,
     CustomerController.dashboardAllCustomer
 );
 
@@ -24,6 +24,7 @@ customerRouter.get("/dashboard-single-customer/:customerId",
 );
 
 customerRouter.post("/dashboard-block-user",
+    authorizeUser,
     validateRequest(CustomerValidations.blockUserValidation),
     CustomerController.blockUser
 );

@@ -17,6 +17,15 @@ const adminSchema = new Schema<IAdmin>({
         type: String,
         required: [true,"Admin password is required."]
     },
+    image: {
+        type: String,
+        default: ''
+    },
+    phone:{
+        type: String,
+        default: ''
+        // required: [true,"Admin phone number is required."]
+    },
     role:{
         type: String,
         default: "Admin"

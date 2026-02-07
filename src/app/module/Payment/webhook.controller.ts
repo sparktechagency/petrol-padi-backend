@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import PaymentModel from "./Payment.model";
 import { ENUM_PAYMENT_STATUS } from "../../../utilities/enum";
 import OrderModel from "../Order/Order.model";
+import PayoutModel from "./Payout.model";
 
 export const paystackWebhookHandler = async (req: Request, res: Response) => {
 
@@ -122,7 +123,31 @@ export const paystackWebhookHandler = async (req: Request, res: Response) => {
             return res.status(200).send("Refund failure logged.");
         }
 
-        return res.status(200).send("Event ignored");
+        //handle payout transfer success and failure
+        else if (event === "transfer.success") {
+            const reference = event.data.reference;
+
+            await PayoutModel.findOneAndUpdate(
+            { reference, status: "PAYOUT_PROCESSING" },
+            { status: "PAYOUT_SUCCESS" }
+            );
+
+            return res.status(200).send("Payout transfer handled successfully.");
+        }
+
+        else if (event === "transfer.failed" || event === "transfer.reversed") {
+            const reference = event.data.reference;
+
+            await PayoutModel.findOneAndUpdate(
+            { reference },
+            { status: "PAYOUT_FAILED" }
+            );
+
+            return res.status(200).send("Payout transfer failed.");
+        }
+
+
+        return res.status(200).send("Event ignored.");
 
     } catch (error: any) {
         console.error("Refund webhook error:", error.message);

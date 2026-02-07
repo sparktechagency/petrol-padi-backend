@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import { initializePayment, verifyPayment, refundPayment } from "../../../helper/paystackHelper";
+import { initializePayment, verifyPayment, refundPayment, getAllNigerianBanks } from "../../../helper/paystackHelper";
 import PaymentModel from "./Payment.model";
 import ApiError from "../../../error/ApiError";
 import { ENUM_PAYMENT_STATUS } from "../../../utilities/enum";
 import OrderModel from "../Order/Order.model";
+import { success } from "zod";
 
 
 
@@ -20,7 +21,7 @@ export const createPayment = async (req: Request, res: Response) => {
     const paystackResponse = await initializePayment(email, amount, metadata);
 
     if (!paystackResponse?.status || !paystackResponse?.data?.reference) {
-      throw new ApiError(500, "Failed to initialize Paystack payment");
+      throw new ApiError(500, "Failed to initialize Paystack payment.");
     }
 
     const reference = paystackResponse.data.reference;
@@ -65,7 +66,7 @@ export const createPayment = async (req: Request, res: Response) => {
     session.endSession();
 
     return res.status(200).json({
-      status: "success",
+      success: true,
       message: "Payment initialized successfully",
       data: paystackResponse,
     });
@@ -78,6 +79,7 @@ export const createPayment = async (req: Request, res: Response) => {
 
     return res.status(500).json({
       status: "error",
+      success: false,
       message: error.message || "Failed to initialize payment",
     });
   }
@@ -112,7 +114,7 @@ export const verifyPaymentController = async (req: Request, res: Response) => {
     }
     return res.status(200).json({
 
-      status: "success",
+      success: true,
       message: "Payment verified successfully.",
       data: paystackData,
     });
@@ -120,7 +122,7 @@ export const verifyPaymentController = async (req: Request, res: Response) => {
 
     console.log("Failed to verify payment.");
     return res.status(500).json({
-      status: "error",
+      success: false,
       message: error.message,
     });
   }
@@ -151,7 +153,7 @@ export const refundController = async (req: Request, res: Response) => {
 
     return res.status(200).json({
 
-      status: "success",
+      success: true,
       message: "Payment refunded successfully.",
       data: result,
     });
@@ -160,8 +162,33 @@ export const refundController = async (req: Request, res: Response) => {
 
     console.log("Failed to refund payment.");
     return res.status(500).json({
-      status: "error",
+      success: false,
       message: error.message,
     });
   }
 };
+
+//get all banks from paystack
+export const getBankList = async (req: Request, res: Response) => {
+  
+  const banks = await getAllNigerianBanks();
+  // console.log("banks list from paystack ====== : ",banks);
+  const allBank = banks.map((bank: { name: any; code: any; }) => ({
+    name: bank.name,
+    code: bank.code
+  }));
+
+  // console.log("allBank list ====== : ",allBank);
+
+  return res.status(200).json({
+    success: true,
+    message: "Banks fetched successfully.",
+    data: allBank,
+  });
+
+  
+};
+
+
+
+

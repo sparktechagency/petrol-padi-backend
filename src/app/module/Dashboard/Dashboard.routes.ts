@@ -11,7 +11,7 @@ import { uploadProfile } from "../../../helper/multerUpload";
 const dashboardRouter = express.Router();
 
 dashboardRouter.post("/create-admin",
-    // auth(["Super_Admin"]),
+    auth(["Super_Admin"]),
     validateRequest(createAdminvalidation),
     DashboardController.adminRegister
 );
@@ -61,9 +61,22 @@ dashboardRouter.delete("/delete-admin",
 );
 
 dashboardRouter.post("/block-admin/:id",
-    // auth(["Super_Admin"]), only super admin can block a admin
+    auth(["Super_Admin"]), //only super admin can block a admin
     // validateRequest(adminLoginValidation),
     DashboardController.blockAdmin
+);
+
+dashboardRouter.get("/get-all-admin",
+    auth(["Super_Admin"]), //only super admin can block a admin
+    // validateRequest(adminLoginValidation),
+    DashboardController.getAllAdmin
+);
+
+dashboardRouter.get("/get-admin-detail",
+    // auth(["Super_Admin"]), only super admin can block a admin
+    authorizeUser,
+    // validateRequest(adminLoginValidation),
+    DashboardController.getAdminDetail
 );
 
 dashboardRouter.get("/dashboard-stat",

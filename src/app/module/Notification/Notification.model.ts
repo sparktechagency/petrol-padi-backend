@@ -5,12 +5,14 @@ const NotificationSchema = new Schema<INotification>({
     toId: { type: Schema.Types.ObjectId, required: true, ref: "Customer" },
     title: { type: String, required: true },
     // details: { type: String, required: true },
+    //route: { type: String, required: true },
+    isSeen: { type: Boolean, default: false },
 }, { timestamps: true });
 
 
 const AdminNotificationSchema = new Schema<IAdminNotification>({
     title: { type: String, required: true },
-    
+    isSeen: { type: Boolean, default: false },
 }, { timestamps: true });
 
 const NotificationModel = models.Notification || model<INotification>("Notification", NotificationSchema);

@@ -10,14 +10,14 @@ const submitHelpAndSupport = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: 201,
         success: true,
-        message: "Profile updated successfully",
+        message: "Submitted help and support report successfully.",
         data: result,
     });
 });
 
 const getHelpAndSupport = catchAsync(async (req, res) => {
 
-    const result = await SettingsServices.getHelpAndSupportService();
+    const result = await SettingsServices.getHelpAndSupportService(req.query);
     
     sendResponse(res, {
         statusCode: 200,

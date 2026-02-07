@@ -23,6 +23,21 @@ export interface IPayment extends Document {
 //   updatedAt: Date;
 }
 
+export interface IPayout {
+  orderId: Types.ObjectId,
+  supplierId: Types.ObjectId,
+
+  amount: Number,
+  commission: Number,
+  netAmount?: Number,
+
+  status: String
+
+  transferCode: String,
+  attempts?: Number
+  lastError?: String,
+}
+
 export interface IPaymentPayload {
   email: string;
   amount: number;
@@ -33,4 +48,16 @@ export interface IPaymentPayload {
   };
   // profileId: string;
   // orderId: string;
+}
+
+export interface ITransferRecipientPayload {
+  name: string;
+  accountNumber: string;
+  bankCode: string;
+}
+
+export interface IInitiateTransferPayload {
+  amount: number; // in kobo
+  recipientCode: string;
+  reference: string;
 }

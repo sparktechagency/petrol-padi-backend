@@ -141,7 +141,7 @@ const deleteOrder = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: "Order status On The Way",
+        message: "Order deleted successfully.",
         data: result,
     });
 });
@@ -150,13 +150,14 @@ const deleteOrder = catchAsync(async (req, res) => {
 
 const dashboardAllOrder = catchAsync(async (req, res) => {
 
-    const result = await OrderServices.dashboardAllOrderService(req.query);
+    const result: any = await OrderServices.dashboardAllOrderService(req.query);
    
     sendResponse(res, {
         statusCode: 200,
         success: true,
         message: "Rerrieved all order.",
-        data: result,
+        meta: result.meta,
+        data: result.orders,
     });
 });
 

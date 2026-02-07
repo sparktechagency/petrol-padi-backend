@@ -7,7 +7,26 @@ const CustomerSchema = new Schema<ICustomer>({
     email: { type: String, required: true, unique: true },
     phone: { type: String, default: "" },
     image: { type: String, default: "" },
-    location: { type: String, default: "" },
+    // location: { type: String, default: "" },
+     location: {
+        type: {
+            type: String,
+            enum: ["Point"],
+            default: "Point"
+        },
+        coordinates: {
+            type: [Number], // [longitude, latitude]
+            // required: true
+            default: [0, 0]
+        },
+        address: {
+            type: String,
+            // required: true
+            default: ""
+        }
+    },
+    latitude: { type: String, default: "" },
+    longitude: { type: String, default: "" },
     bankName: { type: String, default: "" },
     accountName: { type: String, default: "" },
     accountNumber: { type: String, default: "" },

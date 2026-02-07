@@ -31,12 +31,12 @@ const getFuelValidation = z.object({
 
     fuelType:  z.string().nonempty("Fuel type is required")
       .refine(val => val === "Fuel" || val === "Diesel", {
-        message: "Fuel type must be either 'fuel' or 'diesel'",
+        message: "Fuel type must be either 'Fuel' or 'Diesel'",
       }),
 
     time:  z.string().nonempty("Time is required")
           .refine(val => ["this-week", "this-month", "this-year"].includes(val), {
-            message: "Time must be one of: this-week, this-month, this-year",
+            message: "Time must be one of: this-week, this-month or this-year",
           }),
   }),
 });
