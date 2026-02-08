@@ -35,6 +35,7 @@ const getLoadedFuel = catchAsync(async (req, res) => {
 const filterInventory = catchAsync(async (req, res) => {
 
      const { user } = req as AuthRequest;
+    //  console.log(user);
 
     const result = await InventoryServices.filterInventoryService(user,req.query);
     

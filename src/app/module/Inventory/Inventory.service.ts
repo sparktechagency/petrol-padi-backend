@@ -106,10 +106,10 @@ const filterInventoryService = async (userDetails: IJwtPayload,query: Record<str
   switch (time) {
 
     case "this-week":
-      const day = now.getDay();          // 0 = Sunday
-      const diff = now.getDate() - day;  
-      startDate = new Date(now.getFullYear(), now.getMonth(), diff);
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 6); // last 7 days including today
       break;
+
     
     case "this-month":
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -123,7 +123,7 @@ const filterInventoryService = async (userDetails: IJwtPayload,query: Record<str
       throw new ApiError(400,"Invalid time.");
 
     }
-
+    // console.log("Calculated start date:", startDate);
   const matchStage = {
     supplier: supplier,
     createdAt: { $gte: startDate, $lte: now }

@@ -4,12 +4,14 @@ import validateRequest from "../../middlewares/validateRequest";
 import SupplierValidations from "./Supplier.validation";
 import SupplierController from "./Supplier.controller";
 import { uploadDocument } from "../../../helper/multerUpload";
+import { validate } from "node-cron";
 
 
 const supplierRouter = express.Router();
 
 
 supplierRouter.get("/find-nearest-supplier",
+  // validateRequest(SupplierValidations.latLngQuerySchema),
   SupplierController.findLowestHighestFuelRate  
 );
 

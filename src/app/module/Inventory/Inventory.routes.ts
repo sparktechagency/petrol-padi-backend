@@ -20,6 +20,7 @@ inventoryRouter.get("/get-inventory-detail",
 );
 
 inventoryRouter.get("/filter-inventory",
+        authorizeUser,
         validateRequest(InventoryValidations.InventoryQueryValidation),
         InventoryController.filterInventory
 );

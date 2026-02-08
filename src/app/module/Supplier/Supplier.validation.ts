@@ -1,5 +1,22 @@
 import { z } from "zod";
 
+
+const latLngQuerySchema = z.object({
+  query: z.object({
+
+    latitude: z.coerce
+      .number()
+      .min(-90)
+      .max(90),
+  
+    longitude: z.coerce
+      .number()
+      .min(-180)
+      .max(180),
+  })
+});
+
+
 const addRateValidation = z.object({
   body: z.object({
     todayFuelRate: z.number().positive().optional(),
@@ -18,6 +35,7 @@ const addRateValidation = z.object({
   )
 });
 
+
 const getRateValidation = z.object({
   query: z.object({
     // fuelType: z.string()
@@ -34,6 +52,7 @@ const getRateValidation = z.object({
 
 
 const SupplierValidations = { 
+  latLngQuerySchema,
     addRateValidation,
     getRateValidation
  };

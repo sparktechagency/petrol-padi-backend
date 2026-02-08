@@ -5,7 +5,7 @@ import SupplierServices from "./Supplier.service";
 
 const findLowestHighestFuelRate = catchAsync(async (req, res) => {
     
-    const result = await SupplierServices.findLowestHighestFuelRateService(req.query);
+    const result = await SupplierServices.findNearbySuppliersWithRateStats(req.query);
 
     sendResponse(res, {
         statusCode: 200,

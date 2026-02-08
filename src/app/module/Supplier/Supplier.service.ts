@@ -117,163 +117,350 @@ import mongoose from "mongoose";
 
 
 
-const findLowestHighestFuelRateService = async ( locationQuery: Record<string, unknown> ) => {
-  const { location, latitude, longitude, radius = 50 } = locationQuery as {
-    location?: string;
-    latitude?: number;
-    longitude?: Number;
-    radius?: Number;
-  };
+// const findLowestHighestFuelRateService = async ( locationQuery: Record<string, unknown> ) => {
+//   const { location, latitude, longitude, radius = 50 } = locationQuery as {
+//     location?: string;
+//     latitude?: number;
+//     longitude?: Number;
+//     radius?: Number;
+//   };
 
-  console.log(locationQuery);
+//   console.log(locationQuery);
 
-  const hasGeo = latitude && longitude;
+//   const hasGeo = latitude && longitude;
 
-  /**
-   * -----------------------------
-   * BASE MATCH (text + approval)
-   * -----------------------------
-   */
-  const textMatch: any = {
-    isApproved: true
-  };
+//   /**
+//    * -----------------------------
+//    * BASE MATCH (text + approval)
+//    * -----------------------------
+//    */
+//   const textMatch: any = {
+//     isApproved: true
+//   };
 
-  if (location) {
-    textMatch.location.address = { $regex: location, $options: "i" };
-  }
+//   if (location) {
+//     textMatch.location.address = { $regex: location, $options: "i" };
+//   }
 
-//   const radiusKm = Number(radius);
+// //   const radiusKm = Number(radius);
 
-//     const safeRadius = Number.isFinite(radiusKm) && radiusKm > 0
-//     ? radiusKm * 1000
-//     : 50000; // default 50km
+// //     const safeRadius = Number.isFinite(radiusKm) && radiusKm > 0
+// //     ? radiusKm * 1000
+// //     : 50000; // default 50km
 
 
-  /**
-   * -----------------------------
-   * GEO STAGE (only if lat/lng)
-   * -----------------------------
-   */
-//   const geoStage = hasGeo
-//     ? 
-//         {
-//           $geoNear: {
-//             near: {
-//               type: "Point",
-//               coordinates: [longitude!, latitude!],
-//             },
-//             distanceField: "distance",
-//             maxDistance: radius * 1000, // km → meters
-//             spherical: true,
-//             query: textMatch,
-//           },
-//         },
+//   /**
+//    * -----------------------------
+//    * GEO STAGE (only if lat/lng)
+//    * -----------------------------
+//    */
+// //   const geoStage = hasGeo
+// //     ? 
+// //         {
+// //           $geoNear: {
+// //             near: {
+// //               type: "Point",
+// //               coordinates: [longitude!, latitude!],
+// //             },
+// //             distanceField: "distance",
+// //             maxDistance: radius * 1000, // km → meters
+// //             spherical: true,
+// //             query: textMatch,
+// //           },
+// //         },
       
-//     : [{ $match: textMatch.location }];
+// //     : [{ $match: textMatch.location }];
 
-  /**
-   * -----------------------------
-   * HIGHEST / LOWEST RATES
-   * -----------------------------
-   */
-  const lng = Number(longitude);
-const lat = Number(latitude);
+//   /**
+//    * -----------------------------
+//    * HIGHEST / LOWEST RATES
+//    * -----------------------------
+//    */
+//   const lng = Number(longitude);
+// const lat = Number(latitude);
 
-if (isNaN(lng) || isNaN(lat)) {
-  throw new ApiError(400, "Invalid latitude or longitude");
+// if (isNaN(lng) || isNaN(lat)) {
+//   throw new ApiError(400, "Invalid latitude or longitude");
+// }
+
+// // const radiusInMeters =
+// //   typeof safeRadius === "number" && safeRadius > 0
+// //     ? safeRadius
+// //     : 50000;
+
+// const result = await SupplierModel.aggregate([
+//   {
+//     $geoNear: {
+//       near: {
+//         type: "Point",
+//         coordinates: [lng, lat], // ✅ MUST be numbers
+//       },
+//     //   near: [lng, lat],
+//       distanceField: "distance",
+//     //   maxDistance: radiusInMeters, // ✅ > 0 always
+//       spherical: true,
+//       query: textMatch, // ✅ extra filters live here
+//     },
+//   },
+//   {
+//   $match: {
+//     distance: { $lte: radius as any * 1000 } // in meters
+//   }
+// },
+//   {
+//     $facet: {
+//       lowestFuelRate: [
+//         { $sort: { todayFuelRate: 1 } },
+//         { $limit: 1 },
+//         { $project: { _id: 0, name: 1, todayFuelRate: 1 } },
+//       ],
+//       highestFuelRate: [
+//         { $sort: { todayFuelRate: -1 } },
+//         { $limit: 1 },
+//         { $project: { _id: 0, name: 1, todayFuelRate: 1 } },
+//       ],
+//       lowestDieselRate: [
+//         { $sort: { todayDieselRate: 1 } },
+//         { $limit: 1 },
+//         { $project: { _id: 0, name: 1, todayDieselRate: 1 } },
+//       ],
+//       highestDieselRate: [
+//         { $sort: { todayDieselRate: -1 } },
+//         { $limit: 1 },
+//         { $project: { _id: 0, name: 1, todayDieselRate: 1 } },
+//       ],
+//     },
+//   },
+// ]);
+
+
+//   /**
+//    * -----------------------------
+//    * SUPPLIERS LIST
+//    * -----------------------------
+//    */
+//   const suppliers = await SupplierModel.aggregate([
+//     // ...geoStage,
+//      {
+//     $geoNear: {
+//       near: {
+//         type: "Point",
+//         coordinates: [lng, lat], // ✅ MUST be numbers
+//       },
+//     //   near: [lng, lat],
+//       distanceField: "distance",
+//     //   maxDistance: radiusInMeters, // ✅ > 0 always
+//       spherical: true,
+//       query: textMatch, // ✅ extra filters live here
+//     },
+//   },
+//   {
+//   $match: {
+//     distance: { $lte: radius as any * 1000 } // in meters
+//   }
+// },
+//     { $sort: { todayFuelRate: 1 } },
+//     {
+//       $project: {
+//         _id: 1,
+//         name: 1,
+//         location: 1,
+//         todayFuelRate: 1,
+//         todayDieselRate: 1,
+//         distance: hasGeo ? 1 : 0,
+//       },
+//     },
+//   ]);
+
+//   return { result, suppliers };
+// };
+
+/**
+ * Find approved suppliers within radius + compute min/max fuel & diesel rates
+ * Uses $geoWithin + aggregation for efficient stats
+ */
+const findNearbySuppliersWithRateStats = async (query: Record<string, unknown>) => {
+    const { latitude, longitude, radiusKm = 30, includeUnapproved = false, maxResults = 20 } = query;
+
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        throw new Error("Invalid latitude or longitude");
+    }
+
+
+  const radiusInRadians = radiusKm as any / 6378.1; // Earth radius ≈ 6378.1 km
+
+  const geoCondition = {
+    location: {
+      $geoWithin: {
+        $centerSphere: [[lng, lat], radiusInRadians],
+      },
+    },
+  };
+
+  const match: any = {
+    ...geoCondition,
+    isApproved: true,
+    todayFuelRate: { $gt: 0 },     // optional: exclude 0/invalid rates
+    todayDieselRate: { $gt: 0 },
+  };
+
+//   if (includeUnapproved) {
+//     delete match.isApproved;
+//   }
+
+  
+    const pipeline = [
+      { $match: match },
+
+      // We branch here — one path for list, one for stats
+      {
+        $facet: {
+          // A. List of suppliers (limited)
+          suppliers: [
+            { $sort: { averageRating: -1, todayFuelRate: 1 } }, // your preferred sort
+            // { $limit: maxResults },
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                email: 1,
+                // phone: 1,
+                image: 1,
+                address: 1,
+                // location: 1,
+                todayFuelRate: 1,
+                todayDieselRate: 1,
+                todayFuelStock: 1,
+                todayDieselStock: 1,
+                totalRating: 1,
+                averageRating: 1,
+                isApproved: 1,
+              },
+            },
+          ],
+
+          // B. Stats — min & max for fuel and diesel
+          stats: [
+            {
+              $group: {
+                _id: null,
+                minFuel: { $min: '$todayFuelRate' },
+                maxFuel: { $max: '$todayFuelRate' },
+                minDiesel: { $min: '$todayDieselRate' },
+                maxDiesel: { $max: '$todayDieselRate' },
+
+                minFuelDoc: {
+                  $min: {
+                    rate: '$todayFuelRate',
+                    name: '$name',
+                    _id: '$_id',
+                  },
+                },
+                maxFuelDoc: {
+                  $max: {
+                    rate: '$todayFuelRate',
+                    name: '$name',
+                    _id: '$_id',
+                  },
+                },
+                minDieselDoc: {
+                  $min: {
+                    rate: '$todayDieselRate',
+                    name: '$name',
+                    _id: '$_id',
+                  },
+                },
+                maxDieselDoc: {
+                  $max: {
+                    rate: '$todayDieselRate',
+                    name: '$name',
+                    _id: '$_id',
+                  },
+                },
+
+                count: { $sum: 1 },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                count: 1,
+                fuel: {
+                  min: {
+                    $cond: [
+                      { $eq: ['$minFuel', null] },
+                      null,
+                      { rate: '$minFuelDoc.rate', supplierName: '$minFuelDoc.name', supplierId: '$minFuelDoc._id' },
+                    ],
+                  },
+                  max: {
+                    $cond: [
+                      { $eq: ['$maxFuel', null] },
+                      null,
+                      { rate: '$maxFuelDoc.rate', supplierName: '$maxFuelDoc.name', supplierId: '$maxFuelDoc._id' },
+                    ],
+                  },
+                },
+                diesel: {
+                  min: {
+                    $cond: [
+                      { $eq: ['$minDiesel', null] },
+                      null,
+                      { rate: '$minDieselDoc.rate', supplierName: '$minDieselDoc.name', supplierId: '$minDieselDoc._id' },
+                    ],
+                  },
+                  max: {
+                    $cond: [
+                      { $eq: ['$maxDiesel', null] },
+                      null,
+                      { rate: '$maxDieselDoc.rate', supplierName: '$maxDieselDoc.name', supplierId: '$maxDieselDoc._id' },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+
+      // Final shaping
+      {
+        $project: {
+          suppliers: '$suppliers',
+          stats: { $arrayElemAt: ['$stats', 0] },
+          count: { $arrayElemAt: ['$stats.count', 0] },
+        },
+      },
+    ];
+
+    const [result] = await SupplierModel.aggregate(pipeline as any).exec();
+    // console.log(result);
+    if (!result) {
+      return {
+        suppliers: [],
+        stats: {
+          fuel: { min: null, max: null },
+          diesel: { min: null, max: null },
+        },
+        count: 0,
+        searchedFrom: { latitude, longitude, radiusKm },
+      };
+    }
+
+    return {
+      suppliers: result.suppliers || [],
+      stats: result.stats || {
+        fuel: { min: null, max: null },
+        diesel: { min: null, max: null },
+      },
+      count: result.count || 0,
+      searchedFrom: { latitude, longitude, radiusKm },
+    };
+
 }
-
-// const radiusInMeters =
-//   typeof safeRadius === "number" && safeRadius > 0
-//     ? safeRadius
-//     : 50000;
-
-const result = await SupplierModel.aggregate([
-  {
-    $geoNear: {
-      near: {
-        type: "Point",
-        coordinates: [lng, lat], // ✅ MUST be numbers
-      },
-    //   near: [lng, lat],
-      distanceField: "distance",
-    //   maxDistance: radiusInMeters, // ✅ > 0 always
-      spherical: true,
-      query: textMatch, // ✅ extra filters live here
-    },
-  },
-  {
-  $match: {
-    distance: { $lte: radius as any * 1000 } // in meters
-  }
-},
-  {
-    $facet: {
-      lowestFuelRate: [
-        { $sort: { todayFuelRate: 1 } },
-        { $limit: 1 },
-        { $project: { _id: 0, name: 1, todayFuelRate: 1 } },
-      ],
-      highestFuelRate: [
-        { $sort: { todayFuelRate: -1 } },
-        { $limit: 1 },
-        { $project: { _id: 0, name: 1, todayFuelRate: 1 } },
-      ],
-      lowestDieselRate: [
-        { $sort: { todayDieselRate: 1 } },
-        { $limit: 1 },
-        { $project: { _id: 0, name: 1, todayDieselRate: 1 } },
-      ],
-      highestDieselRate: [
-        { $sort: { todayDieselRate: -1 } },
-        { $limit: 1 },
-        { $project: { _id: 0, name: 1, todayDieselRate: 1 } },
-      ],
-    },
-  },
-]);
-
-
-  /**
-   * -----------------------------
-   * SUPPLIERS LIST
-   * -----------------------------
-   */
-  const suppliers = await SupplierModel.aggregate([
-    // ...geoStage,
-     {
-    $geoNear: {
-      near: {
-        type: "Point",
-        coordinates: [lng, lat], // ✅ MUST be numbers
-      },
-    //   near: [lng, lat],
-      distanceField: "distance",
-    //   maxDistance: radiusInMeters, // ✅ > 0 always
-      spherical: true,
-      query: textMatch, // ✅ extra filters live here
-    },
-  },
-  {
-  $match: {
-    distance: { $lte: radius as any * 1000 } // in meters
-  }
-},
-    { $sort: { todayFuelRate: 1 } },
-    {
-      $project: {
-        _id: 1,
-        name: 1,
-        location: 1,
-        todayFuelRate: 1,
-        todayDieselRate: 1,
-        distance: hasGeo ? 1 : 0,
-      },
-    },
-  ]);
-
-  return { result, suppliers };
-};
 
 
 const searchSupplierByNameService = async (nameQuery: Record<string,unknown>) => {
@@ -281,7 +468,7 @@ const searchSupplierByNameService = async (nameQuery: Record<string,unknown>) =>
     const suppliers = await SupplierModel.find({
         name: { $regex: nameQuery, $options: "i" }, // case-insensitive match
         isApproved: true
-    }).select("name location todayFuelRate todayDieselRate");
+    }).select("name email phone image address todayFuelRate todayDieselRate todayFuelStock todayDieselStock totalRating averageRating").lean();
 
     return suppliers;
 }
@@ -689,7 +876,8 @@ const deleteSupplierService = async (id: string) =>{
 
 
 const SupplierServices = { 
-    findLowestHighestFuelRateService,
+    // findLowestHighestFuelRateService,
+    findNearbySuppliersWithRateStats,
     searchSupplierByNameService,
     supplierDetailService,
     addFuelRateService,

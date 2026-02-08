@@ -41,7 +41,7 @@ const runCronJobEverydatAtNight = () => {
     });
 
     // Run at 23:50
-    cron.schedule("55 23 * * *", async () => {
+    cron.schedule("58 23 * * *", async () => {
       await safeRun("Update supplier field after inventory generation", resetSupplierDailyFieldsService);
     }, {
       timezone: "Asia/Dhaka"
