@@ -26,7 +26,7 @@ async function main() {
     myServer = app.listen(port, () => {
     //   logger.info(`Server running on http://0.0.0.0:${port}`);
     //   seedSuperAdmin();
-        console.log("Petrol padi server hitting : http://10.10.20.57:8001");
+        console.log("Petrol padi server hitting :  http://localhost:8001");
     });
 
 
