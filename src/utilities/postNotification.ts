@@ -9,7 +9,7 @@ const postNotification = async (data: INotificationPayload) => {
   try {
     // let notification;
 
-    if (data.toId && data.toId.trim() !== "") {
+    if (data.toId) {
       // Send notification to a user
        await NotificationModel.create(data);
     } else {

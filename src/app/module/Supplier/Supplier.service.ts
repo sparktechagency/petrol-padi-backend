@@ -330,7 +330,7 @@ const findNearbySuppliersWithRateStats = async (query: Record<string, unknown>) 
                 // phone: 1,
                 image: 1,
                 address: 1,
-                // location: 1,
+                location: 1,
                 todayFuelRate: 1,
                 todayDieselRate: 1,
                 todayFuelStock: 1,
@@ -468,7 +468,7 @@ const searchSupplierByNameService = async (nameQuery: Record<string,unknown>) =>
     const suppliers = await SupplierModel.find({
         name: { $regex: nameQuery.name, $options: "i" }, // case-insensitive match
         isApproved: true
-    }).select("name email phone image address todayFuelRate todayDieselRate todayFuelStock todayDieselStock totalRating averageRating").lean();
+    }).select("name email phone image location address todayFuelRate todayDieselRate todayFuelStock todayDieselStock totalRating averageRating").lean();
 
     return suppliers;
 }
