@@ -6,9 +6,13 @@ export interface IOrder {
     status : string;
     paymentStatus: string;
     paymentReference: string;
-    fuelType: string;
-    priceRate: number;
-    quantity: number;
+    // fuelType: string;
+    fuelPriceRate: number;
+    dieselPriceRate: number;
+    fuelQuantity: number;
+    dieselQuantity: number;
+    fuelPrice: number;
+    dieselPrice: number;
     totalPrice: number;
     location: string;
     latitude: string;

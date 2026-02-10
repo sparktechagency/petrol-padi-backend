@@ -32,7 +32,7 @@ orderRouter.post("/cancel-order/:orderId",
         OrderController.cancelOrder
 );
 
-orderRouter.post("/confirm-delivery/:orderId",
+orderRouter.post("/confirm-order/:orderId",
         //authorization,
         // validateRequest(OrderValidations.getAllOrderValidation),
         OrderController.confirmOrder

@@ -327,7 +327,7 @@ const findNearbySuppliersWithRateStats = async (query: Record<string, unknown>) 
                 _id: 1,
                 name: 1,
                 email: 1,
-                // phone: 1,
+                phone: 1,
                 image: 1,
                 address: 1,
                 location: 1,
