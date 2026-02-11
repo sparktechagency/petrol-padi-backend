@@ -51,14 +51,14 @@ const getAllOrderService = async (userDetails: JwtPayload,query: Record<string,u
     const {  orderStatus} = query;
     
 
-    const allOrder = await OrderModel.find({customer: profileId, status: orderStatus}).populate({path: "supplier", select:"name email"}).select("fuelType quantity totalPrice createdAt").lean();
+    const allOrder = await OrderModel.find({customer: profileId, status: orderStatus}).populate({path: "supplier", select:"name email"}).lean();
 
     return allOrder;
 }
 
 const singleOrderService = async (orderId: string) => {
 
-    const order: IOrder | any = await OrderModel.findById(orderId).populate({path:"supplier", select:" name email phone image location totalRating averageRating"}).lean();
+    const order: IOrder | any = await OrderModel.findById(orderId).populate({path:"supplier", select:" name email phone image  address totalRating averageRating"}).lean();
 
     //also need supplier avg rating and total rating
     // const supplierIdFromRequest = order?.supplier;
@@ -369,14 +369,14 @@ const supplierAllOrderService = async (userDetails: JwtPayload,query: Record<str
     const {profileId: supplierId} = userDetails;
     const { orderStatus} = query;
 
-    const allOrder = await OrderModel.find({supplier: supplierId, status: orderStatus}).populate({path: "customer", select:"name email"}).select("fuelType quantity totalPrice location createdAt").lean();
+    const allOrder = await OrderModel.find({supplier: supplierId, status: orderStatus}).populate({path: "customer", select:"name email"}).lean();
 
     return allOrder;
 }
 
 const supplierSingleOrderService = async (orderId: string) => {
 
-    const order = await OrderModel.findById(orderId).populate({path:"customer", select:"name email phone image location"}).lean();
+    const order = await OrderModel.findById(orderId).populate({path:"customer", select:"name email phone image address"}).lean();
 
     //also need supplier avg rating and total rating
     
