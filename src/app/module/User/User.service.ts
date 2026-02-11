@@ -44,7 +44,7 @@ const updateUserProfile = async (
   }
 
   // Update fields
-  const { name, phone, location, bankName, accountName, accountNumber, bankCode } = payload;
+  const { name, phone, location, bankName, accountName, accountNumber, bankCode, latitude,longitude } = payload;
 
   if (name) {
     profile.name = name;
@@ -71,7 +71,18 @@ const updateUserProfile = async (
   if (accountName) profile.accountName = accountName;
   if (accountNumber) profile.accountNumber = accountNumber;
   if (bankCode) profile.bankCode = bankCode;
-  if (location) profile.location = location;
+
+  if (location && latitude && longitude) {
+
+      profile.address = location;
+      //validate latitude and longitude before updating
+      const lat = Number(latitude);
+      const lon = Number(longitude);
+      if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+          throw new ApiError(400, 'Invalid latitude or longitude values.');
+      }
+      profile.location.coordinates = [lon,lat];
+  } 
 
   // Handle image update
   if (file) {
@@ -96,6 +107,7 @@ const updateUserProfile = async (
       bankName: profile.bankName,
       accountName: profile.accountName,
       accountNumber: profile.accountNumber,
+      address: profile.address
   };
 };
 
