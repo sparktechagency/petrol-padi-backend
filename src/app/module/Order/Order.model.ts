@@ -24,7 +24,8 @@ const OrderSchema = new Schema<IOrder>({
 
 //Add this to your Order schema for performance:
 OrderSchema.index({ customer: 1, createdAt: -1 });
-// OrderSchema.index({ customer: 1, createdAt: -1 });
+OrderSchema.index({ supplier: 1, status: 1, createdAt: -1 });
+
 
 
 const OrderModel = models.Order || model<IOrder>("Order", OrderSchema);

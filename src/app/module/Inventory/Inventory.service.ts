@@ -239,10 +239,10 @@ const totalSpentService = async (userDetails: IJwtPayload,query: Record<string,u
   switch (time) {
 
     case "this-week":
-      const day = now.getDay();          // 0 = Sunday
-      const diff = now.getDate() - day;  
-      startDate = new Date(now.getFullYear(), now.getMonth(), diff);
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 6); // last 7 days including today
       break;
+
     
     case "this-month":
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -255,62 +255,51 @@ const totalSpentService = async (userDetails: IJwtPayload,query: Record<string,u
     default:
       throw new ApiError(400,"Invalid time.");
 
-    }
-
-  //  const now = new Date();
-  // now.setHours(0, 0, 0, 0);
-
-  // switch (time) {
-  //   case "this-week": {
-  //     const day = now.getDay() || 7;
-  //     now.setDate(now.getDate() - day + 1);
-  //     return now;
-  //   }
-  //   case "this-month":
-  //     return new Date(now.getFullYear(), now.getMonth(), 1);
-  //   case "this-year":
-  //     return new Date(now.getFullYear(), 0, 1);
-  //   default:
-  //     throw new ApiError(400, "Invalid time.");
-  // }
+  }
 
   const matchStage = {
     customer: customer,
-    order: ENUM_ORDER_STATUS.CONFIRMED,
+    status: ENUM_ORDER_STATUS.CONFIRMED,
     paymentStatus: "Paid",
     createdAt: { $gte: startDate, $lte: now }
   };
 
   const result = await OrderModel.aggregate([
     {
-      $match: matchStage
+      $match: matchStage,
     },
+
     {
       $group: {
         _id: "$customer",
+
+        // Total spending (all orders)
         totalSpent: { $sum: "$totalPrice" },
 
+        // Fuel spent (only if fuelQuantity > 0)
         fuelSpent: {
           $sum: {
             $cond: [
-              { $eq: ["$fuelType", ENUM_FUEL_TYPE.FUEL] },
-              "$totalPrice",
+              { $gt: ["$fuelQuantity", 0] },
+              "$fuelPrice",
               0,
             ],
           },
         },
 
+        // Diesel spent (only if dieselQuantity > 0)
         dieselSpent: {
           $sum: {
             $cond: [
-              { $eq: ["$fuelType", ENUM_FUEL_TYPE.DIESEL] },
-              "$totalPrice",
+              { $gt: ["$dieselQuantity", 0] },
+              "$dieselPrice",
               0,
             ],
           },
         },
       },
     },
+
     {
       $project: {
         _id: 0,
@@ -347,6 +336,10 @@ const totalSpentService = async (userDetails: IJwtPayload,query: Record<string,u
       },
     },
   ]);
+  console.log("startDate:", startDate);
+  console.log("now:", now);
+  console.log("Total Spent Result:", result);
+
 
   // return result[0] || {
   //   totalSpent: 0,
@@ -360,100 +353,19 @@ const totalSpentService = async (userDetails: IJwtPayload,query: Record<string,u
   if(time === "this-week" || time === "this-month"){
 
     const dailySpent = await OrderModel.find(matchStage)
-              .populate({path: "supplier", select: "name"})
-                .select("fuelType quantity totalPrice createdAt")
+              .populate({path: "supplier", select: "name email"})
+                .select("fuelQuantity diselQuantity fuelPrice diselPeice totalPrice createdAt")
                   .sort({createdAt: 1})
                     .lean();
-
-    
-    // const data = await OrderModel.aggregate([
-    //   { $match: matchStage },
-
-    //   {
-    //     $facet: {
-    //       summary: [
-    //         {
-    //           $group: {
-    //             _id: null,
-    //             totalSpent: { $sum: "$totalPrice" },
-    //             fuelSpent: {
-    //               $sum: {
-    //                 $cond: [
-    //                   { $eq: ["$fuelType", ENUM_FUEL_TYPE.FUEL] },
-    //                   "$totalPrice",
-    //                   0,
-    //                 ],
-    //               },
-    //             },
-    //             dieselSpent: {
-    //               $sum: {
-    //                 $cond: [
-    //                   { $eq: ["$fuelType", ENUM_FUEL_TYPE.DIESEL] },
-    //                   "$totalPrice",
-    //                   0,
-    //                 ],
-    //               },
-    //             },
-    //           },
-    //         },
-    //         {
-    //           $project: {
-    //             _id: 0,
-    //             totalSpent: 1,
-    //             fuelSpent: 1,
-    //             dieselSpent: 1,
-    //             fuelPercentage: {
-    //               $cond: [
-    //                 { $gt: ["$totalSpent", 0] },
-    //                 { $multiply: [{ $divide: ["$fuelSpent", "$totalSpent"] }, 100] },
-    //                 0,
-    //               ],
-    //             },
-    //             dieselPercentage: {
-    //               $cond: [
-    //                 { $gt: ["$totalSpent", 0] },
-    //                 { $multiply: [{ $divide: ["$dieselSpent", "$totalSpent"] }, 100] },
-    //                 0,
-    //               ],
-    //             },
-    //           },
-    //         },
-    //       ],
-
-    //       details: [
-    //         {
-    //           $lookup: {
-    //             from: "suppliers",
-    //             localField: "supplier",
-    //             foreignField: "_id",
-    //             as: "supplier",
-    //           },
-    //         },
-    //         { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
-    //         {
-    //           $project: {
-    //             fuelType: 1,
-    //             quantity: 1,
-    //             totalPrice: 1,
-    //             createdAt: 1,
-    //             supplier: { name: "$supplier.name" },
-    //           },
-    //         },
-    //         { $sort: { createdAt: 1 } },
-    //       ],
-    //     },
-    //   },
-    // ]);
-
-    // return {
-    //   summary: data[0].summary[0] ?? {},
-    //   details: data[0].details,
-    // };
-
-
     
     return {
-      summary: result[0] ,
+      summary: result[0] || {
+        totalSpent: 0,
+        fuelSpent: 0,
+        dieselSpent: 0,
+        fuelPercentage: 0,
+        dieselPercentage: 0,
+      },
       details: dailySpent
     };
 
@@ -462,82 +374,78 @@ const totalSpentService = async (userDetails: IJwtPayload,query: Record<string,u
 
     const yearlyStats = await OrderModel.aggregate([
       {
-        $match: matchStage
+        $match: matchStage,
       },
+
       {
         $group: {
           _id: {
             month: { $month: "$createdAt" },
-            fuelType: "$fuelType",
           },
-          totalAmount: { $sum: "$totalPrice" },
-          totalQuantity: { $sum: "$quantity" },
+
+          fuelAmount: { $sum: "$fuelPrice" },
+          dieselAmount: { $sum: "$dieselPrice" },
+          fuelQuantity: { $sum: "$fuelQuantity" },
+          dieselQuantity: { $sum: "$dieselQuantity" },
         },
       },
-      {
-        $group: {
-          _id: "$_id.month",
-          fuelAmount: {
-            $sum: {
-              $cond: [
-                { $eq: ["$_id.fuelType", ENUM_FUEL_TYPE.FUEL] },
-                "$totalAmount",
-                0,
-              ],
-            },
-          },
-          dieselAmount: {
-            $sum: {
-              $cond: [
-                { $eq: ["$_id.fuelType", ENUM_FUEL_TYPE.DIESEL] },
-                "$totalAmount",
-                0,
-              ],
-            },
-          },
-          fuelQuantity: {
-            $sum: {
-              $cond: [
-                { $eq: ["$_id.fuelType", ENUM_FUEL_TYPE.FUEL] },
-                "$totalQuantity",
-                0,
-              ],
-            },
-          },
-          dieselQuantity: {
-            $sum: {
-              $cond: [
-                { $eq: ["$_id.fuelType", ENUM_FUEL_TYPE.DIESEL] },
-                "$totalQuantity",
-                0,
-              ],
-            },
-          },
-        },
-      },
+
       {
         $project: {
           _id: 0,
-          month: "$_id",
+
+          monthNumber: "$_id.month",
+
+          month: {
+            $arrayElemAt: [
+              [
+                "", // placeholder for index 0
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+              ],
+              "$_id.month",
+            ],
+          },
+
           fuelAmount: 1,
           dieselAmount: 1,
           fuelQuantity: 1,
           dieselQuantity: 1,
-          // totalAmount: {
-          //   $add: ["$fuelAmount", "$dieselAmount"],
-          // },
-          // totalQuantity: {
-          //   $add: ["$fuelQuantity", "$dieselQuantity"],
-          // },
+
+          totalAmount: {
+            $add: ["$fuelAmount", "$dieselAmount"],
+          },
+
+          totalQuantity: {
+            $add: ["$fuelQuantity", "$dieselQuantity"],
+          },
         },
       },
+
       {
-        $sort: { month: 1 },
+        $sort: { monthNumber: 1 },
       },
-    ]);
+  ]);
+
 
     return {
-      summary: result[0],
+      summary: result[0] || {
+       totalSpent: 0,
+        fuelSpent: 0,
+        dieselSpent: 0,
+        fuelPercentage: 0,
+        dieselPercentage: 0,
+      },
       details: yearlyStats
     };
 
