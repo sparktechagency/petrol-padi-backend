@@ -508,16 +508,16 @@ const completeOrderService = async (orderId: string) => {
 
     const supplier = await SupplierModel.findById(order.supplier);
 
-    if(order.fuelType === ENUM_FUEL_TYPE.FUEL){
-        //adjust reserve fuel
-        supplier.todayReservedFuelForDelivery -= order.quantity;
+    // if(order.fuelType === ENUM_FUEL_TYPE.FUEL){
+    //     //adjust reserve fuel
+    //     supplier.todayReservedFuelForDelivery -= order.quantity;
     
-    }
+    // }
 
-    else if( order.fuelType === ENUM_FUEL_TYPE.DIESEL){
-        //adjust reserve fuel
-        supplier.todayReservedDieselForDelivery -= order.quantity;
-    }
+    // else if( order.fuelType === ENUM_FUEL_TYPE.DIESEL){
+    //     //adjust reserve fuel
+    //     supplier.todayReservedDieselForDelivery -= order.quantity;
+    // }
 
     //update order status
     order.status = ENUM_ORDER_STATUS.COMPLETED;
@@ -525,7 +525,7 @@ const completeOrderService = async (orderId: string) => {
     await Promise.all([ order.save(), supplier.save() ]);
 
     if(order.status !== ENUM_ORDER_STATUS.COMPLETED){
-        throw new ApiError(500,"Failed to Confirm order");
+        throw new ApiError(500,"Failed to Complete order.");
     }else {
 
         await Promise.all([

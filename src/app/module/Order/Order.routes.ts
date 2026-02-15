@@ -66,7 +66,7 @@ orderRouter.post("/accept-order/:orderId",
 orderRouter.post("/complete-order/:orderId",
         //authorization,
         // validateRequest(OrderValidations.getAllOrderValidation),
-        OrderController.acceptOrder
+        OrderController.completeOrder
 );
 
 orderRouter.post("/order-on-the-way/:orderId",

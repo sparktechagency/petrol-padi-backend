@@ -122,6 +122,18 @@ const acceptOrder = catchAsync(async (req, res) => {
     });
 });
 
+const completeOrder = catchAsync(async (req, res) => {
+
+    const result = await OrderServices.completeOrderService(req.params.orderId);
+   
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Order completed!!",
+        data: result,
+    });
+});
+
 const orderOnTheWay= catchAsync(async (req, res) => {
 
     const result = await OrderServices.orderOnTheWayService(req.params.orderId);
@@ -184,6 +196,7 @@ const OrderController = {
     supplierAllOrder,
     supplierSingleOrder,
     acceptOrder,
+    completeOrder,
     orderOnTheWay,
     deleteOrder,
     dashboardAllOrder,
