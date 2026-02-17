@@ -538,12 +538,10 @@ const getFuelRateService = async (userDetails: JwtPayload) => {
 
     const supplierId = new mongoose.Types.ObjectId(profileId);
 
-    const pipeline = [
-        // 1️⃣ Match supplier + today + delivered orders
+    const pipeline4 = [
         {
             $match: {
-                supplier: new mongoose.Types.ObjectId(supplierId),
-                status: ENUM_ORDER_STATUS.CONFIRMED, // change if your delivered enum differs
+                supplier: supplierId,
                 createdAt: {
                     $gte: todayStart,
                     $lte: todayEnd,
@@ -551,195 +549,124 @@ const getFuelRateService = async (userDetails: JwtPayload) => {
             },
         },
 
-        // 2️⃣ Add delivery type classification
         {
-            $addFields: {
-            deliveryType: {
-                $switch: {
-                branches: [
+            $facet: {
+
+                // 🔵 1️⃣ Accepted + On_The_Way + Completed
+                activeOrders: [
                     {
-                    case: {
-                        $and: [
-                            { $gt: ["$fuelQuantity", 0] },
-                            { $eq: ["$dieselQuantity", 0] },
-                        ],
-                    },
-                    then: "Fuel",
-                    },
-                    {
-                    case: {
-                        $and: [
-                            { $gt: ["$dieselQuantity", 0] },
-                            { $eq: ["$fuelQuantity", 0] },
-                        ],
-                    },
-                    then: "Diesel",
+                    $match: {
+                        status: {
+                            $in: [
+                                "Accepted",
+                                "On_The_Way",
+                                "Completed",
+                                "Confirmed"
+                            ]
+                        }
+                    }
                     },
                     {
-                    case: {
-                        $and: [
-                            { $gt: ["$fuelQuantity", 0] },
-                            { $gt: ["$dieselQuantity", 0] },
-                        ],
+                    $group: {
+                        _id: null,
+
+                        fuelCount: {
+                            $sum: {
+                                $cond: [{ $gt: ["$fuelQuantity", 0] }, 1, 0]
+                            }
+                        },
+
+                        dieselCount: {
+                            $sum: {
+                                $cond: [{ $gt: ["$dieselQuantity", 0] }, 1, 0]
+                            }
+                        },
+
+                        totalCount: { $sum: 1 }
+                    }
                     },
-                    then: "Both",
-                    },
+                    { $project: { _id: 0 } }
                 ],
-                default: "Unknown",
-                },
-            },
-            },
-        },
 
-        // 3️⃣ Group totals
-        {
-            $group: {
-                _id: null,
-
-                totalFuelQuantity: { $sum: "$fuelQuantity" },
-                totalFuelPrice: { $sum: "$fuelPrice" },
-
-                totalDieselQuantity: { $sum: "$dieselQuantity" },
-                totalDieselPrice: { $sum: "$dieselPrice" },
-
-                totalOrders: { $sum: 1 },
-            },
-        },
-
-        // 4️⃣ Clean output
-        {
-            $project: {
-                _id: 0,
-                totalFuelQuantity: 1,
-                totalFuelPrice: 1,
-                totalDieselQuantity: 1,
-                totalDieselPrice: 1,
-                totalOrders: 1,
-            },
-        },
-    ]
-
-    const pipeline2 = [
-        {
-            $match: {
-                supplier: new mongoose.Types.ObjectId(supplierId),
-                orderStatus: "Accepted",
-                createdAt: {
-                        $gte: todayStart,
-                        $lte: todayEnd,
+                // 🟢 2️⃣ Confirmed Orders
+                confirmedOrders: [
+                    {
+                        $match: {
+                            status: "Confirmed"
+                        }
                     },
+                    {
+                        $group: {
+                            _id: null,
+
+                            fuelCount: {
+                                $sum: {
+                                    $cond: [{ $gt: ["$fuelQuantity", 0] }, 1, 0]
+                                }
+                            },
+
+                            dieselCount: {
+                                $sum: {
+                                    $cond: [{ $gt: ["$dieselQuantity", 0] }, 1, 0]
+                                }
+                            },
+
+                            fuelRevenue: {
+                                $sum: { $ifNull: ["$fuelPrice", 0] }
+                            },
+
+                            dieselRevenue: {
+                                $sum: { $ifNull: ["$dieselPrice", 0] }
+                            },
+
+                            totalCount: { $sum: 1 }
+                        }
+                    },
+                    { $project: { _id: 0 } }
+                ]
             }
         },
-        {
-            $group: {
-                _id: null,
-                totalFuelQuantity: { $sum: "$fuelQuantity" },
-                totalDieselQuantity: { $sum: "$dieselQuantity" },
-                totalOrders: { $sum: 1 }
-            }
-        },
+
+        // Clean final response
         {
             $project: {
-                _id: 0,
-                totalFuelQuantity: 1,
-                totalDieselQuantity: 1,
-                totalOrders: 1
-            }
-        }
-    ];
-
-    const pipeline3 = [
-        // 1️⃣ Match today's orders for supplier
-        {
-            $match: {
-                supplier: new mongoose.Types.ObjectId(supplierId),
-                createdAt: {
-                    $gte: todayStart,
-                    $lte: todayEnd,
-                },
-                orderStatus: { $in: ["Accepted", "Confirmed"] }
-            },
-        },
-
-        // 2️⃣ Group by orderStatus
-        {
-            $group: {
-            _id: "$orderStatus",
-
-            totalFuelQuantity: {
-                $sum: { $ifNull: ["$fuelQuantity", 0] }
-            },
-
-            totalDieselQuantity: {
-                $sum: { $ifNull: ["$dieselQuantity", 0] }
-            },
-
-            totalFuelPrice: {
-                $sum: { $ifNull: ["$fuelPrice", 0] }
-            },
-
-            totalDieselPrice: {
-                $sum: { $ifNull: ["$dieselPrice", 0] }
-            },
-
-            totalOrders: { $sum: 1 }
-            },
-        },
-
-        // 3️⃣ Restructure into single clean object
-        {
-            $group: {
-            _id: null,
-            data: {
-                $push: {
-                status: "$_id",
-                fuelQuantity: "$totalFuelQuantity",
-                dieselQuantity: "$totalDieselQuantity",
-                fuelPrice: "$totalFuelPrice",
-                dieselPrice: "$totalDieselPrice",
-                totalOrders: "$totalOrders"
-                }
-            }
-            }
-        },
-
-        {
-            $project: {
-            _id: 0,
-            accepted: {
-                $first: {
-                $filter: {
-                    input: "$data",
-                    as: "item",
-                    cond: { $eq: ["$$item.status", "Accepted"] }
-                }
-                }
-            },
-            confirmed: {
-                $first: {
-                $filter: {
-                    input: "$data",
-                    as: "item",
-                    cond: { $eq: ["$$item.status", "Confirmed"] }
-                }
-                }
-            }
+                totalOrders: { $arrayElemAt: ["$activeOrders", 0] },
+                confirmedOrders: { $arrayElemAt: ["$confirmedOrders", 0] }
             }
         }
     ];
 
 
 
-    const [supplierTodayStats, supplier, acceptedOrderTotal] = await Promise.all([
-            OrderModel.aggregate(pipeline3),
+    const [supplierTodayStats, supplier] = await Promise.all([
+            OrderModel.aggregate(pipeline4),
             SupplierModel.findById(profileId).select("name email todayFuelRate todayDieselRate").lean(),
-            OrderModel.aggregate(pipeline2)
+            // OrderModel.aggregate(pipeline2)
     ]);
     // await SupplierModel.findById(profileId).select("name email todayFuelRate todayDieselRate");
 
-    console.log(acceptedOrderTotal);
+    // console.log(supplierTodayStats,supplierTodayStats);
 
-    return {supplierCompletedDelivery: supplierTodayStats ,supplierTodayRate: supplier, acceptedOrderTotal: acceptedOrderTotal[0] || { totalFuelQuantity: 0, totalDieselQuantity: 0, totalOrders: 0 }};
+    return {
+        supplierTodayStats: supplierTodayStats[0] || { 
+            totalOrders: {
+                fuelCount: 0,
+                dieselCount: 0,
+                totalCount: 0
+            }, confirmedOrders: {
+                fuelCount: 0,
+                dieselCount: 0,
+                fuelRevenue: 0,
+                dieselRevenue: 0,
+                totalCount: 0
+
+            } 
+        },
+        supplierTodayRate: supplier || {
+            name: "", email: "", todayFuelRate: 0, todayDieselRate: 0 
+        },
+        // acceptedOrderTotal
+    }
 
 }
 
@@ -764,122 +691,231 @@ const supplierRevenueService = async (userDetails: JwtPayload, query: Record<str
     const {profileId} = userDetails;
     let {time} = query;
 
-    const today = new Date();
-    const last7Days = new Date();
-    last7Days.setDate(today.getDate() - 6);
+    // const today = new Date();
+    // const last7Days = new Date();
+    // last7Days.setDate(today.getDate() - 6);
 
     const supplier = new mongoose.Types.ObjectId(profileId);
 
     const baseMatch = {
         supplier,
-        status: ENUM_ORDER_STATUS.COMPLETED,
+        status: ENUM_ORDER_STATUS.CONFIRMED,
     };
+
+    const now = new Date();
+    let startDate: Date;
+
+    switch (time) {
+
+        case "this-week":
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 6); // last 7 days including today
+        break;
+
+        
+        case "this-month":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+        
+        case "this-year":
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+
+        default:
+        throw new ApiError(400,"Invalid time.");
+
+    }
 
 
 
     if(time == "this-week"){
-        const weeklyData = await OrderModel.aggregate([
-            {
-                $match: {
-                ...baseMatch,
-                createdAt: {
-                    $gte: last7Days,
-                    $lte: today,
-                },
-                },
-            },
-            {
-                $group: {
-                _id: {
-                    day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                },
-                totalRevenue: { $sum: "$totalPrice" },
-                },
-            },
-            {
-                $project: {
-                _id: 0,
-                day: "$_id.day",
-                totalRevenue: 1,
-                },
-            },
-            {
-                $sort: { day: 1 },
-            },
-        ]);
+        
 
+        const weeklyData = await OrderModel.aggregate( [
+        {
+            $match: {
+            supplier: new mongoose.Types.ObjectId(supplier),
+            status: "Confirmed",
+            createdAt: {
+                $gte: startDate,
+                $lte: now,
+            },
+            },
+        },
+
+        {
+            $group: {
+            _id: {
+                year: { $year: "$createdAt" },
+                month: { $month: "$createdAt" },
+                day: { $dayOfMonth: "$createdAt" },
+            },
+
+            fuelQuantity: { $sum: { $ifNull: ["$fuelQuantity", 0] } },
+            fuelRevenue: { $sum: { $ifNull: ["$fuelPrice", 0] } },
+
+            dieselQuantity: { $sum: { $ifNull: ["$dieselQuantity", 0] } },
+            dieselRevenue: { $sum: { $ifNull: ["$dieselPrice", 0] } },
+            },
+        },
+
+        { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } },
+
+        {
+            $project: {
+            _id: 0,
+            date: {
+                $dateToString: {
+                format: "%Y-%m-%d",
+                date: {
+                    $dateFromParts: {
+                    year: "$_id.year",
+                    month: "$_id.month",
+                    day: "$_id.day",
+                    },
+                },
+                },
+            },
+            fuelQuantity: 1,
+            fuelRevenue: 1,
+            dieselQuantity: 1,
+            dieselRevenue: 1,
+            },
+        },
+        ]);
+        console.log(weeklyData);
         return weeklyData;
+
 
     }
     else if(time == "this-month"){
-        const last30Days = new Date();
-        last30Days.setDate(today.getDate() - 29);
+       
 
-        const monthlyData = await OrderModel.aggregate([
-            {
-                $match: {
-                ...baseMatch,
-                createdAt: {
-                    $gte: last30Days,
-                    $lte: today,
+    const monthLyData = await OrderModel.aggregate( [
+        {
+            $match: {
+            supplier: new mongoose.Types.ObjectId(supplier),
+            status: "Confirmed",
+            createdAt: {
+                $gte: startDate,
+                $lte: now,
+            },
+            },
+        },
+
+        {
+            $group: {
+            _id: {
+                year: { $year: "$createdAt" },
+                month: { $month: "$createdAt" },
+                day: { $dayOfMonth: "$createdAt" },
+            },
+
+            fuelQuantity: { $sum: { $ifNull: ["$fuelQuantity", 0] } },
+            fuelRevenue: { $sum: { $ifNull: ["$fuelPrice", 0] } },
+
+            dieselQuantity: { $sum: { $ifNull: ["$dieselQuantity", 0] } },
+            dieselRevenue: { $sum: { $ifNull: ["$dieselPrice", 0] } },
+            },
+        },
+
+        { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } },
+
+        {
+            $project: {
+            _id: 0,
+            date: {
+                $dateToString: {
+                format: "%Y-%m-%d",
+                date: {
+                    $dateFromParts: {
+                    year: "$_id.year",
+                    month: "$_id.month",
+                    day: "$_id.day",
+                    },
                 },
                 },
             },
-            {
-                $group: {
-                _id: {
-                    day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                },
-                totalRevenue: { $sum: "$totalPrice" },
-                },
+            fuelQuantity: 1,
+            fuelRevenue: 1,
+            dieselQuantity: 1,
+            dieselRevenue: 1,
             },
-            {
-                $project: {
-                _id: 0,
-                day: "$_id.day",
-                totalRevenue: 1,
-                },
-            },
-            {
-                $sort: { day: 1 },
-            },
+        },
         ]);
 
-        return monthlyData;
-
+        return monthLyData;
     }
     if(time == "this-year"){
-        const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+        
 
-        const yearlyData = await OrderModel.aggregate([
-            {
-                $match: {
-                ...baseMatch,
-                createdAt: {
-                    $gte: startOfYear,
-                    $lte: today,
-                },
-                },
+        const yearlyData = await OrderModel.aggregate( [
+        // 1️⃣ Match supplier + confirmed + this year
+        {
+            $match: {
+            supplier: new mongoose.Types.ObjectId(supplier),
+            status: "Confirmed",
+            createdAt: {
+                $gte: startDate,
+                $lte: now,
             },
-            {
-                $group: {
-                _id: { $month: "$createdAt" },
-                totalRevenue: { $sum: "$totalPrice" },
-                },
             },
-            {
-                $project: {
-                _id: 0,
-                month: "$_id",
-                totalRevenue: 1,
-                },
+        },
+
+        // 2️⃣ Group by month
+        {
+            $group: {
+            _id: { $month: "$createdAt" },
+
+            fuelQuantity: {
+                $sum: { $ifNull: ["$fuelQuantity", 0] }
             },
-            {
-                $sort: { month: 1 },
+
+            fuelRevenue: {
+                $sum: { $ifNull: ["$fuelPrice", 0] }
             },
+
+            dieselQuantity: {
+                $sum: { $ifNull: ["$dieselQuantity", 0] }
+            },
+
+            dieselRevenue: {
+                $sum: { $ifNull: ["$dieselPrice", 0] }
+            },
+            },
+        },
+
+        // 3️⃣ Sort by month number
+        {
+            $sort: { _id: 1 }
+        },
+
+        // 4️⃣ Convert month number to month name
+        {
+            $project: {
+            _id: 0,
+            month: {
+                $arrayElemAt: [
+                [
+                    "", 
+                    "January", "February", "March", "April",
+                    "May", "June", "July", "August",
+                    "September", "October", "November", "December"
+                ],
+                "$_id"
+                ]
+            },
+
+            fuelQuantity: 1,
+            fuelRevenue: 1,
+            dieselQuantity: 1,
+            dieselRevenue: 1,
+            },
+        },
         ]);
 
         return yearlyData;
+
     }
 }
 

@@ -190,7 +190,7 @@ const addBankDetailService = async (userDetails: JwtPayload,payload: IBankDetail
     const {profileId,role} = userDetails;
   // console.log(payload);
 
-    let profile : ICustomer| ISupplier | null = null;
+    let profile: any;
 
     //check bank account is valid or not
     // const isValidAccount = await resolveBankAccount(payload.accountNumber, payload.bankCode);
@@ -228,7 +228,7 @@ const addBankDetailService = async (userDetails: JwtPayload,payload: IBankDetail
         bankName:profile.bankName, 
         accountName:profile.accountName,
         accountNumber:profile.accountNumber, 
-        // bankCode: profile.bankCode
+        bankCode: profile.bankCode
      };
 }
 

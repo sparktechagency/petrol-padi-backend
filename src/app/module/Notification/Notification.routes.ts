@@ -30,7 +30,7 @@ notificationRouter.get("/get-admin-notification",
     NotificationController.getAllAdminNotification
 );
 
-notificationRouter.get("/delete-admin-notification/:id",
+notificationRouter.delete("/delete-admin-notification/:id",
     // authorizeUser,
     NotificationController.deleteAdminNotification
 );

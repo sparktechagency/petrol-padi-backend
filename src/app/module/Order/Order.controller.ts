@@ -52,7 +52,7 @@ const cancelOrder = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: "Retrieved a order details",
+        message: "Order cancelled successfully.",
         data: result,
     });
 });

@@ -51,8 +51,9 @@ const makeNotificationSeen = async (id: string) => {
     const updatedNotification = await NotificationModel.findByIdAndUpdate(id,{isSeen: true},{new:true});
 
     if(!updatedNotification){
-        throw new ApiError(500,"Failed to update notification status");
+        throw new ApiError(500,"Failed to update notification status.");
     }
+    
     return updatedNotification;
     
 }

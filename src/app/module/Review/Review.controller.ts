@@ -21,7 +21,7 @@ const getAllReview = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: 200,
         success: true,
-        message: "Profile updated successfully",
+        message: "Retrieved all reviews for the supplier.",
         data: result,
     });
 });
